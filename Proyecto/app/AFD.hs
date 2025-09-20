@@ -45,3 +45,5 @@ afdPar = AFD {
     inicial  = 0,
     finales  = [0]
 }
+
+--Añadir función minimizadora?

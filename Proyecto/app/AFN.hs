@@ -1,7 +1,5 @@
 module AFN
-(
-    AFN(..)
-)
+
 where
 -- Buscando en internet, set en haskell permite operaciones con conjuntos
 -- (ya que el método de AFN a AFD es con operaciones de conjuntos)
@@ -42,5 +40,37 @@ nuevosEstadosFinales afn estados = any (`elem` finalesAFN afn) (toList estados)
 subconjuntosAFN :: AFN -> EstadosAlcazables -> Simbolo -> EstadosAlcazables
 subconjuntosAFN afn estados simbolo = unions [deltaAFN afn estado simbolo | estado <- toList estados]
 
--- trans_afn_a_afd :: AFN -> AFD
+{-|
+Función la cual hace la conversión del autómata finito no determinista a un autómata finito determinista
+recibe un AFN y lo transforma en un AFD, cada conjunto de estados representa un estado.
+-}
+trans_afn_a_afd :: AFN -> AFD
+trans_afn_a_afd afn = 
+    let estadoinicial = fromList [inicialAFN afn] --iniciamos del estado inicial del autómata finito no determinista
+        -- Los nuevos que iremos obteniendo son aquellos que nos llevan de uno o más estados alcanzables hacia más estados alcazables
+        estadosNuevos :: [EstadosAlcazables] -> [EstadosAlcazables] -> [EstadosAlcazables]
+        estadosNuevos revisados [] = revisados
+        estadosNuevos revisados (actual:siguiente) = 
+            -- los estados se procesan estando en el actual con el símbolo correspondiente en el afn
+            let estados = [subconjuntosAFN afn actual simbolo | simbolo <- alfabetoAFN afn]
+                -- estados no revisados con lambda, si su elemento no está en revisado y si 
+                noRevisado = filter (\nr -> not (nr `elem` revisados) && not (null nr)) estados
+                -- Listas de los estados que ya revisamos en el AFN y de aquellos que no.
+                estadosRecorridos = revisados ++ [actual] 
+                noRecorridos = siguiente ++ noRevisado
+            in estadosNuevos estadosRecorridos noRecorridos
 
+        -- Partes resultantes de la autómata finita determinista
+        --función de transición delta (sin normalizar, vamos de un conjunto de estados a mutiples conjuntos de estados)
+        delta :: EstadosAlcazables -> Simbolo -> EstadosAlcazables
+        delta cjtoEstados simbolo = subconjuntosAFN afn cjtoEstados simbolo
+        estadosNuevosAFD = estadosNuevos [] [estadoinicial]
+        estadosFinales = filter(nuevosEstadosFinales afn) estadosNuevosAFD
+
+    in AFD{
+        estadosAFD = estadosNuevosAFD,
+        alfabetoAFD = alfabetoAFN afn, --mismo por ser equivalente
+        deltaAFD = delta,
+        inicialAFD = estadoinicial,
+        finalesAFD = estadosFinales
+    }

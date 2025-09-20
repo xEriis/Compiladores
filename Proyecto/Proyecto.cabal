@@ -43,6 +43,7 @@ executable Proyecto-exe
   other-modules:
       AFD
       AFN
+      AFNe
       Paths_Proyecto
   autogen-modules:
       Paths_Proyecto
