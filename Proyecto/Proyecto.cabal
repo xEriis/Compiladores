@@ -44,6 +44,7 @@ executable Proyecto-exe
       AFD
       AFN
       AFNe
+      RegexAFNe
       Paths_Proyecto
   autogen-modules:
       Paths_Proyecto
