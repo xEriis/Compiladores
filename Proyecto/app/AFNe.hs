@@ -1,6 +1,6 @@
 module AFNe
 (
-    AFNEp(..),
+    AFNe(..),
     rmDup,
     afnEp_to_AFN
 )
@@ -16,34 +16,34 @@ import Data.Set (toList, fromList)
 type Trans_eps = (String, Maybe Char, [String])
 
 -- Automáta no determinista con transiciones epsilon, 
-data AFNEp = AFNEp {estados :: [String], alfabeto :: [Char],
+data AFNe = AFNe {estados :: [String], alfabeto :: [Char],
                   transiciones :: [Trans_eps],
                   inicial :: String, final :: String}
   deriving (Show)
 
-afnEp_to_AFN :: AFNEp -> AFN
+afnEp_to_AFN :: AFNe -> AFN
 afnEp_to_AFN m =  AFN {estadosN = estados m,
                        alfabetoN =  alfabeto m,
                        transicionesN = trans_eps_to_afn m,
                        inicialN = inicial m, finalN = final m}
                
-trans_eps_to_afn :: AFNEp -> [Trans_afn]
+trans_eps_to_afn :: AFNe -> [Trans_afn]
 trans_eps_to_afn m = concat $
   map (trans_eps_to_afn_aux m (transiciones m) (alfabeto m)) (estados m)
 
-trans_eps_to_afn_aux :: AFNEp -> [Trans_eps] -> String -> String -> [Trans_afn]
+trans_eps_to_afn_aux :: AFNe -> [Trans_eps] -> String -> String -> [Trans_afn]
 trans_eps_to_afn_aux _ _ [] _ = []
 trans_eps_to_afn_aux m l (c:cs) q = (q, c, qn) : (trans_eps_to_afn_aux m l cs q)
   where qn = eclosure2 m $ do_trans_nep2 l c (eclosure l m q)
 
-eclosure ::  [Trans_eps] -> AFNEp -> String  -> [String]
+eclosure ::  [Trans_eps] -> AFNe -> String  -> [String]
 eclosure [] _ q1 = [q1]
 eclosure ((q2, Nothing, l):xs) m q1
   | q2 == q1 = rmDup $ (q1:l) ++ eclosure2 m l
   | otherwise = eclosure xs m q1
 eclosure (_:xs) m q1  = eclosure xs m q1
 
-eclosure2 ::  AFNEp -> [String]  -> [String]
+eclosure2 ::  AFNe -> [String]  -> [String]
 eclosure2 _ [] = []
 eclosure2 m (x:xs) = eclosure (transiciones m) m x ++ eclosure2 m xs
 

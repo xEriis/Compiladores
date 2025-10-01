@@ -5,19 +5,19 @@ import AFNe
 import Regex
 
 e1 :: Expr
-e1 = And (Kleene (Or (Term '0') (Term '1'))) (Term '1')
+e1 = Concat (Kleene (Or (Term '0') (Term '1'))) (Term '1')
 
-a1 :: AFNEp
-a1 = expr_to_AFNEp e1
+a1 :: AFNe
+a1 = regex_to_AFNe e1
 
 a2 :: AFN
 a2 = afnEp_to_AFN a1
 
 e2 :: Expr
-e2 = And (And (Term 'f') (Term 'o')) (Term 'r')
+e2 = Concat (Concat (Term 'f') (Term 'o')) (Term 'r')
 
-a3 :: AFNEp
-a3 = expr_to_AFNEp e2
+a3 :: AFNe
+a3 = regex_to_AFNe e2
 
 a4 :: AFN
 a4 = afnEp_to_AFN a3
