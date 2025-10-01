@@ -1,62 +1,72 @@
 module AFNe
-
+(
+    AFNEp(..),
+    rmDup,
+    afnEp_to_AFN
+)
 where
 
-type Estado = Int
-type Simbolo = Char
-type EstadosAlcazables = [Estado]
-epsilon :: Simbolo
--- Podriamos cambiarlo a "Epsilon", pero los simbolos son chars, si Simbolo fuera string se podría
--- pero eso consumiría aún más memoria
-epsilon = 'ε' 
+import AFN
+import Data.Set (toList, fromList)
+-- | Abstracción de una transición epsilón,
+-- utilizamos nothing para modelar una transición epsilón.
+-- la tercia representa la función delta, el primero es
+-- el estado donde se lee el cáracter o el epsilon y te lleva
+-- a una lista de estados (no determinista).
+type Trans_eps = (String, Maybe Char, [String])
 
-type DeltaE = Estado -> Simbolo -> [Estado] --la función de transición ahora nos puede llevar a una lista de estados
-data AFNe = AFNe {
-    estadosAFNe :: [Estado],
-    alfabetoAFNe :: [Simbolo], --Aunque el alfabeto será el mismo que el AFD
-    deltaAFNe :: DeltaE,
-    inicialAFNe :: Estado,
-    finalesAFNe :: [Estado]
-}
+-- Automáta no determinista con transiciones epsilon, 
+data AFNEp = AFNEp {estados :: [String], alfabeto :: [Char],
+                  transiciones :: [Trans_eps],
+                  inicial :: String, final :: String}
+  deriving (Show)
 
-type DeltaND = Estado -> Simbolo -> [Estado] --la función de transición nos sigue llevando de un estado a una lista de estados
-data AFN = AFN {
-    estadosAFN :: [Estado],
-    alfabetoAFN :: [Simbolo], --Aunque el alfabeto será el mismo que el AFD
-    deltaAFN :: DeltaND,
-    inicialAFN :: Estado,
-    finalesAFN :: [Estado]
-}
+afnEp_to_AFN :: AFNEp -> AFN
+afnEp_to_AFN m =  AFN {estadosN = estados m,
+                       alfabetoN =  alfabeto m,
+                       transicionesN = trans_eps_to_afn m,
+                       inicialN = inicial m, finalN = final m}
+               
+trans_eps_to_afn :: AFNEp -> [Trans_afn]
+trans_eps_to_afn m = concat $
+  map (trans_eps_to_afn_aux m (transiciones m) (alfabeto m)) (estados m)
 
--- Función de los estados alcanzables con épsilon
-alcanzaEpsilon :: AFNe -> Estado -> [Estado]
-alcanzaEpsilon afne estado  = cierre [estado] [estado] -- cierre o unión de las epsilon transiciones
-    where
-        cierre recorrido [] = recorrido
-        cierre recorrido (actual: siguiente) = 
-            let
-                estadoCerrado = filter (`notElem` recorrido) (deltaAFNe afne actual epsilon)    
-            in cierre (recorrido ++ estadoCerrado) (siguiente ++ estadoCerrado)
+trans_eps_to_afn_aux :: AFNEp -> [Trans_eps] -> String -> String -> [Trans_afn]
+trans_eps_to_afn_aux _ _ [] _ = []
+trans_eps_to_afn_aux m l (c:cs) q = (q, c, qn) : (trans_eps_to_afn_aux m l cs q)
+  where qn = eclosure2 m $ do_trans_nep2 l c (eclosure l m q)
 
--- Función para eliminar las épsilon transiciones del autómata
-eliminaEpsilon :: AFNe -> Estado -> Simbolo -> [Estado]
-eliminaEpsilon afne estado simbolo = 
-    let
-        estadoNuevo = alcanzaEpsilon afne estado
-        alcanzablesEpsilon = concatMap (\e -> deltaAFNe afne e simbolo) estadoNuevo
-        alcanzablesAFN = concatMap (alcanzaEpsilon afne) alcanzablesEpsilon
-    in alcanzablesAFN
+eclosure ::  [Trans_eps] -> AFNEp -> String  -> [String]
+eclosure [] _ q1 = [q1]
+eclosure ((q2, Nothing, l):xs) m q1
+  | q2 == q1 = rmDup $ (q1:l) ++ eclosure2 m l
+  | otherwise = eclosure xs m q1
+eclosure (_:xs) m q1  = eclosure xs m q1
 
-estadosFinales :: AFNe -> [Estado]
-estadosFinales afne = [estado | estado <- estadosAFNe afne, any (`elem` finalesAFNe afne) (alcanzaEpsilon afne estado)]
+eclosure2 ::  AFNEp -> [String]  -> [String]
+eclosure2 _ [] = []
+eclosure2 m (x:xs) = eclosure (transiciones m) m x ++ eclosure2 m xs
 
-afne_a_afn :: AFNe -> AFN
-afne_a_afn afne = 
-    AFN {
-        estadosAFN = estadosAFNe afne,
-        alfabetoAFN = filter (/= epsilon) (alfabetoAFNe afne),
-        deltaAFN = eliminaEpsilon afne,
-        inicialAFN = inicialAFNe afne,
-        finalesAFN = estadosFinales afne
-    }
+rmDup :: (Ord a) => [a] -> [a]
+rmDup = toList . fromList
 
+do_trans_nep :: [Trans_eps] -> Char -> String -> [String]
+do_trans_nep [] _ _ = [""]
+do_trans_nep ((q1, c1, q2):xs) c2 q3
+  | q1 == q3 && (to_char c1) == c2 = q2
+  | otherwise            = do_trans_nep xs c2 q3
+
+to_char :: Maybe Char -> Char
+to_char Nothing = '~'
+to_char (Just a) = a
+
+
+do_trans_nep2 :: [Trans_eps] -> Char -> [String] -> [String]
+do_trans_nep2 l c qs = formato $ map (do_trans_nep l c) qs
+
+
+formato :: [[String]] -> [String]
+formato [] = []
+formato (x:xs)
+  | x == [""]   = formato xs
+  | otherwise =  x++formato xs

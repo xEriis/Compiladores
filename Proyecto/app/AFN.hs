@@ -1,39 +1,50 @@
 module AFN
-
+(
+    AFN(..),
+    Trans_afn
+)
 where
--- Elementos del autómata finito no determinista
-import Data.List (nub,sort)
 
-type Estado = Int
+-- Elementos del autómata finito no determinista
+-- BIBLIOTECAS (están comentadas para que no generen warning)
+--import Data.List (nub,sort)
+--import AFD
+
+-- | Abstracción de una transición no determinista, 
+-- igual que la anterior, sin considerar epsilón, pero
+-- sigue siendo no determinista. 
+type Trans_afn = (String, Char, [String])
+data AFN = AFN {
+    estadosN :: [String], 
+    alfabetoN :: [Char],
+    transicionesN :: [Trans_afn],
+    inicialN :: String, finalN :: String}
+  deriving (Show)
+
+-- TODO Conversion. MM aquí tuve problema porque el data definido en AFD no crresponde con el de aquí.
+-- Así daba error al convertir uno en otro.
+-- por eso comenté todo jajaj
+
+
+
+
+{-type Estado = Int
 type Simbolo = Char
 type EstadosAlcazables = [Estado] -- Conjunto de estados alcanzables a partir de un estado
 
 type DeltaND = Estado -> Simbolo -> [Estado] --la función de transición ahora nos puede llevar a una lista de estados
-data AFN = AFN {
+data AFN1 = AFN1 {
     estadosAFN :: [Estado],
     alfabetoAFN :: [Simbolo], --Aunque el alfabeto será el mismo que el AFD
     deltaAFN :: DeltaND,
     inicialAFN :: Estado,
     finalesAFN :: [Estado]
 }
-
-
--- Quintupla del estado finito determinista
--- Usaremos los conjuntos en crudo para determinar a donde se va, es decir, el conjunto de estados alcanzables
--- se volverá un estado nuevo posteriormente en el AFN
-data AFD = AFD {
-    estadosAFD :: [[Estado]], --Lista de estados
-    alfabetoAFD :: [Simbolo], --Simbolos 
-    deltaAFD :: [Estado] -> Simbolo -> [Estado],
-    inicialAFD :: [Estado], 
-    finalesAFD :: [[Estado]]
-}
-
-nuevosEstadosFinales :: AFN -> [Estado] -> Bool -- Si un estado final está en alguno de los subconjuntos
+nuevosEstadosFinales :: AFN1 -> [Estado] -> Bool -- Si un estado final está en alguno de los subconjuntos
 nuevosEstadosFinales afn estados = any (`elem` finalesAFN afn) estados
 
 -- Partimos de unir los estados alcanzables para crear nuevos (estos funcionan como nuestros nuevos estados)
-subconjuntosAFN :: AFN -> [Estado] -> Simbolo -> [Estado]
+subconjuntosAFN :: AFN1 -> [Estado] -> Simbolo -> [Estado]
 -- nub elimina duplicados, mientras que sort como se intuye, ordena. (En haskell [0,1] es distinto de [1,0], tiene sentido, por lo que al ordenarlos solo tenemos una opción)
 -- La unica mala "desición" que tenemos esque nub es O(n)^2, por lo cual si el profe nos pide optimizar conviene mejor set o monedas
 subconjuntosAFN afn estados simbolo = nub . sort . concat $ [deltaAFN afn e simbolo | e <- estados]
@@ -42,7 +53,7 @@ subconjuntosAFN afn estados simbolo = nub . sort . concat $ [deltaAFN afn e simb
 Función la cual hace la conversión del autómata finito no determinista a un autómata finito determinista
 recibe un AFN y lo transforma en un AFD, cada conjunto de estados representa un estado.
 -}
-trans_afn_a_afd :: AFN -> AFD
+trans_afn_a_afd :: AFN1 -> AFD
 trans_afn_a_afd afn = 
     let estadoinicial = [inicialAFN afn] --iniciamos del estado inicial del autómata finito no determinista
         -- Los nuevos que iremos obteniendo son aquellos que nos llevan de uno o más estados alcanzables hacia más estados alcazables
@@ -66,9 +77,19 @@ trans_afn_a_afd afn =
         estadosFinales = filter(nuevosEstadosFinales afn) estadosNuevosAFD
 
     in AFD{
-        estadosAFD = estadosNuevosAFD,
-        alfabetoAFD = alfabetoAFN afn, --mismo por ser equivalente
-        deltaAFD = delta,
-        inicialAFD = estadoinicial,
-        finalesAFD = estadosFinales
+        estados= concat estadosNuevosAFD,
+        alfabeto= alfabetoAFN afn, --mismo por ser equivalente
+        delta = delta,
+        inicial = concat estadoinicial,
+        finales = concat estadosFinales
     }
+
+
+data AFD = AFD {
+    estadosAFD :: [[Estado]], --Lista de estados
+    alfabetoAFD :: [Simbolo], --Simbolos 
+    deltaAFD :: [Estado] -> Simbolo -> [Estado],
+    inicialAFD :: [Estado], 
+    finalesAFD :: [[Estado]]
+}
+-}

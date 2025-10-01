@@ -18,8 +18,13 @@ Ramírez Venegas Alexa Paola - 320111677
 
 ### Instrucciones de compilado:
 
-Agregar instrucciones para compilar el proyecto
-
+Para compilar es necesario ejecutar:
+```
+cd Proyecto
+stack clean
+stack build
+stack exec Proyecto-exe
+```
 
 #### Notas:
 

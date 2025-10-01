@@ -21,12 +21,12 @@ data AFD = AFD {
 }
 
 transita :: String -> Estado -> Delta -> Estado
-transita [] q d = q
+transita [] q _ = q
 transita (s:cs) q d = transita cs q' d
    where q' = d q s
 
 acepta :: String -> AFD -> Bool
-acepta s (AFD q e d q0 f) = elem(transita s q0 d)f
+acepta s (AFD _ _ d q0 f) = elem(transita s q0 d)f
 
 
 -- Ejemplo de una autómata
