@@ -38,9 +38,14 @@ find_term (x:xs)
     | x == 'T' = find_term xs
     | x == 'e' = find_term xs
     | x == 'r' = find_term xs
-    | x == 'm' = cabeza xs
+    | x == 'm' = cabeza_e xs
     | otherwise = error "Formato incorrecto"
 
+cabeza_e :: [Char] -> Char
+cabeza_e [] = error "Formato incorrecto"
+cabeza_e (x:xs)
+    | isSpace x = cabeza_e xs
+    | otherwise = x
 
 uno :: [Char] -> [Char]
 uno [] = []
