@@ -44,6 +44,7 @@ executable Proyecto-exe
       AFD
       AFN
       AFNe
+      ReadFile
       Regex
       Paths_Proyecto
   autogen-modules:

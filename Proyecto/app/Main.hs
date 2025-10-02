@@ -3,6 +3,16 @@ module Main (main) where
 import AFN
 import AFNe
 import Regex
+import ReadFile
+
+e0 :: Expr
+e0 = string_to_regex "Concat (Kleene (Or (Term 0) (Term 1))) (Term 1)"
+
+a0 :: AFNe
+a0 = regex_to_AFNe e0
+
+a02 :: AFN
+a02 = afnEp_to_AFN a0
 
 e1 :: Expr
 e1 = Concat (Kleene (Or (Term '0') (Term '1'))) (Term '1')
@@ -24,7 +34,11 @@ a4 = afnEp_to_AFN a3
 
 main :: IO ()
 main = do
-    putStrLn("Expresión Regular:")
+    putStrLn("Prueba para leer expresiones regulares:")
+    print(e0)
+    print(a0)
+    print(a02)
+    putStrLn("\n\n Expresión Regular:")
     print(e2)
     putStrLn("\n\n Autómata con transiciones epsilon:")
     print(a3)
