@@ -4,6 +4,7 @@ import AFN
 import AFNe
 import Regex
 import ReadFile
+import System.IO
 
 e0 :: Expr
 e0 = string_to_regex "Concat (Kleene (Or (Term 0) (Term 1))) (Term 1)"
@@ -32,8 +33,15 @@ a3 = regex_to_AFNe e2
 a4 :: AFN
 a4 = afnEp_to_AFN a3
 
+
 main :: IO ()
 main = do
+    fileHandle <- openFile "./specs/IMP.md" ReadMode
+    contents <- hGetContents fileHandle
+    let n = handle_contents2 contents
+    putStrLn("\nExpresiones leídas del archivo : \n")
+    print(n)
+    putStrLn("\n")
     putStrLn("Prueba para leer expresiones regulares:")
     print(e0)
     print(a0)
@@ -50,4 +58,5 @@ main = do
     print(a1)
     putStrLn("\n\n Autómata no determinista:")
     print(a2)
+    hClose fileHandle
 
