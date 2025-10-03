@@ -1,5 +1,6 @@
 module Main (main) where
 
+import AFD
 import AFN
 import AFNe
 import Regex
@@ -33,6 +34,10 @@ a3 = regex_to_AFNe e2
 a4 :: AFN
 a4 = afnEp_to_AFN a3
 
+-- Paso de conversión determinista
+a5 :: AFD
+a5 = afn_to_AFD a4
+
 
 main :: IO ()
 main = do
@@ -52,6 +57,10 @@ main = do
     print(a3)
     putStrLn("\n\n Autómata no determinista:")
     print(a4)
+    -- Aqui proximamente tendría que salir la conversión determinista
+    putStrLn("\n\n Autómata determinista:")
+    print(a5)
+
     putStrLn("\n \n Ejemplo 2- Expresión Regular:")
     print(e1)
     putStrLn("\n\n Autómata con transiciones epsilon:")

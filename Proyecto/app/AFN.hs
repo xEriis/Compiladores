@@ -1,25 +1,60 @@
 module AFN
 (
     AFN(..),
-    Trans_afn
+    Trans_afn,
+    afn_to_AFD
 )
 where
 
 -- Elementos del autómata finito no determinista
 -- BIBLIOTECAS (están comentadas para que no generen warning)
---import Data.List (nub,sort)
---import AFD
+
+-- import Data.List (nub,sort)
+import AFD
 
 -- | Abstracción de una transición no determinista, 
 -- igual que la anterior, sin considerar epsilón, pero
 -- sigue siendo no determinista. 
-type Trans_afn = (String, Char, [String])
+type Trans_afn = (String, Char, [String]) -- delta en nuestra definición
 data AFN = AFN {
     estadosN :: [String], 
     alfabetoN :: [Char],
     transicionesN :: [Trans_afn],
-    inicialN :: String, finalN :: String}
+    inicialN :: String, 
+    finalN :: String
+    }
   deriving (Show)
+
+-- Como anotación (En teoría podríamos mandar a llamar las funciones para no utilizar el where)
+-- Ahora el AFD está bien definido para que @Victor pueda hacer la implementación de AFD a AFD minimo con los datos esperados
+afn_to_AFD :: AFN -> AFD
+afn_to_AFD afn = AFD {
+    estadosD      = estadosAFD,
+    alfabetoD     = alfabetoN afn,
+    transicionesD = transcionesAFD,
+    inicialD      = inicialAFD,
+    finalesD      = finalesAFD
+}
+  where
+    -- Estado inicial en el nuevo autómata
+    inicialAFD :: String
+    inicialAFD = nombreEstadoN [inicialN afn]
+
+    -- Conjunto de estados del AFD (por ahora vacío se hará por conjuntos para eso se ocupa Data.List)
+    estadosAFD :: [String]
+    estadosAFD = []  
+
+    -- Transiciones deterministas (se llenarán con la construcción de conjuntos)
+    transcionesAFD :: [Trans_afd]
+    transcionesAFD = []  
+
+    -- Estados finales (se determinan viendo si contienen algún estado final del AFN)
+    finalesAFD :: [String]
+    finalesAFD = []
+
+    -- Función auxiliar para codificar un conjunto de estados como String (para no marear tanto)
+    nombreEstadoN :: [String] -> String
+    nombreEstadoN ss = concat ss
 
 -- TODO Conversion. MM aquí tuve problema porque el data definido en AFD no crresponde con el de aquí.
 -- Así daba error al convertir uno en otro.
