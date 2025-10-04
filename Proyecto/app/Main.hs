@@ -51,6 +51,7 @@ main = do
     print(e0)
     print(a0)
     print(a02)
+    
     putStrLn("\n\n Expresión Regular:")
     print(e2)
     putStrLn("\n\n Autómata con transiciones epsilon:")
@@ -60,6 +61,7 @@ main = do
     -- Aqui proximamente tendría que salir la conversión determinista
     putStrLn("\n\n Autómata determinista:")
     print(a5)
+    
 
     putStrLn("\n \n Ejemplo 2- Expresión Regular:")
     print(e1)
@@ -67,5 +69,13 @@ main = do
     print(a1)
     putStrLn("\n\n Autómata no determinista:")
     print(a2)
+    
+    putStrLn("\n\n Ejemplo 3 - Expresión regular: (0 1* (0+1)):") 
+    let afdRes = afn_to_AFD afn_ejemplo3
+    putStrLn "Autómata no determinista:"
+    print afn_ejemplo3
+    putStrLn "\nAutómata determinista:"
+    print afdRes
+
     hClose fileHandle
 

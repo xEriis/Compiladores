@@ -25,7 +25,8 @@ afnEp_to_AFN :: AFNe -> AFN
 afnEp_to_AFN m =  AFN {estadosN = estados m,
                        alfabetoN =  alfabeto m,
                        transicionesN = trans_eps_to_afn m,
-                       inicialN = inicial m, finalN = final m}
+                       inicialN = inicial m, 
+                       finalN = final m}
                
 trans_eps_to_afn :: AFNe -> [Trans_afn]
 trans_eps_to_afn m = concat $
