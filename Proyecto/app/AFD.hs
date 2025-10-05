@@ -24,6 +24,8 @@ sortSet :: Ord a => [a] -> [a]
 sortSet = Set.toAscList . Set.fromList
 
 type Trans_afd = (String, Char, String)
+
+--La estructura de un Automata Finito Determinista.
 data AFD = AFD {
     estadosD :: [String],
     alfabetoD :: [Char],
@@ -54,14 +56,29 @@ checaTransicion q s (x:xs)
 acepta :: String -> AFD -> Bool
 acepta s (AFD _ _ d q0 f) = transita q0 s d `elem` f
 
+-- Función que elimina los estados no alcanzables desde el estado inicial
+-- del automata recibido.
+-- Recibe un AFD y regresa un AFD sin los estados no alcanzables, ni 
+-- sus tranciones.
 eliminaInalcanzables :: AFD -> AFD
 eliminaInalcanzables (AFD q a d i f) = (AFD alcanzables a (eliminaTransiciones d noAlcanzables) i (f \\ noAlcanzables))
                         where alcanzables = getAlcanzables [i] d
                               noAlcanzables = q \\ alcanzables 
 
+-- Función auxiliar para eliminar las transiciones de los estados no alcanzables
+-- funciona haciendo uso de listas de comprensión de manera que solo agrega aquellas transiciones 
+-- que no tienen alguno de sus estados en la tupla contenidos en los estados no alcanzables.
+-- Recibe el mapeo de transiciones y una lista de los estados no alcanzables
+-- Regresa el nuevo mapeo de transiciones, sin las transiciones que involucraban
+-- estados no alcanzables.
 eliminaTransiciones :: [Trans_afd] -> [String] -> [Trans_afd]
 eliminaTransiciones d s = [ (qb, t, qn) | (qb, t, qn) <- d, not (qb `elem` s || qn `elem` s)]
 
+-- Función auxiliar que obtiene los estados alcanzables dada una lista de estados
+-- Recibe una lista de estados y el mapeo de transiciones.
+-- Regresa una lista con los estados alcanzables desde cada 
+-- uno de los estados en la lista.
+-- Se usa inicialmente desde el estado inicial.
 getAlcanzables :: [String] -> [Trans_afd] -> [String]
 getAlcanzables q d
   | null ep || esSubLista epn qp = q
@@ -70,14 +87,25 @@ getAlcanzables q d
         epn = nub ep
         qp = nub q
 
+-- Función auxiliar que identifica si una lista es sublista de otra
+-- similar a la funcionalidad de estar contenido en de los conjuntos.
 esSubLista :: Eq a => [a] -> [a] -> Bool
 esSubLista xs ys = all (\x -> elem x ys) xs
 
+-- Función auxiliar para obtener los estados alcanzables que 
+-- regresa todos los estados posibles dada una lista de estados
+-- Recibe una lista de estados y el mapeo de transiciones
+-- Regresa una lista de estados
 estadosPosiblesLista :: [String] -> [Trans_afd] -> [String]
 estadosPosiblesLista [] d = []
 estadosPosiblesLista (q:qs) d = [q] ++ qp ++ estadosPosiblesLista qs d
   where qp = estadosPosibles q d
 
+-- Función auxiliar para obtener los estados alcanzables dado
+-- un estado, similar a la versión de lista solo que para un solo
+-- elemento.
+-- Recibe un estado y el mapeo de transiciones 
+-- Regresa una lista de estados
 estadosPosibles :: String -> [Trans_afd] -> [String]
 estadosPosibles q [] = []
 estadosPosibles q (t:ts) 
@@ -85,7 +113,17 @@ estadosPosibles q (t:ts)
   | otherwise = estadosPosibles q ts
   where (q0, ms, qn) = t
 
--- Todavía haciendose, solo regresa un [[String]] para motivos de debugging
+-- La función principal de minimización.
+-- Primero elimina los estados no alcanzables, luego se le aplica el
+-- algoritmo de minimización visto en clase y luego se unen y mezclan
+-- los estados nuevos equivalentes obtenidos de la minimización.
+-- Esta implementación hace uso de los estados equivalentes en su forma de string
+-- es decir, que si tenemos "q0" y "q1" como equivalentes, su representación será
+-- "q0q1" de manera que para modificar los estados del automata original, sus transiciones
+-- su estado inicial y su estado final hará falta comparar substrings de los estados y poder
+-- remplazarlos o en su caso eliminarlos, por sus equivalentes ya mezclados o unidos.
+-- Hace uso de varias funciones auxiliares para poder funcionar correctamente.
+-- Recibe un AFD y regresa un AFD.
 minimiza :: AFD -> AFD
 minimiza (AFD q a d i f) = (AFD (minimizaEstados nq eqs) na (nub (minimizaTransiciones nd [] eqs)) (minimizaInicial ni eqs) (nub (minimizaFinales nf eqs)))
   where lq = length q
@@ -97,21 +135,41 @@ minimiza (AFD q a d i f) = (AFD (minimizaEstados nq eqs) na (nub (minimizaTransi
 
 
 -- Función auxiliar para minimizar un AFD 
--- Recibe un AFD, una matriz que representa nuestra tabla y regresa "por ahora"
--- una tabla
+-- Recibe un AFD, una matriz que representa nuestra tabla y le aplica el algoritmo
+-- visto en clase, es decir, los primeros dos pasos del algoritmo, con una matriz de -1
+-- aunque podría cambiarse el valor a cualquier otro realmente.
+-- Regresa una matriz despues de haberse aplicado el algoritmo, lo que devuelve
+-- los estados equivalentes representados por un 0 en su casilla.
 minimizaAux :: AFD -> Matrix Int -> Matrix Int
 minimizaAux a m = (operaTabla2 a m (operaTabla1 a m))
 
+-- Función auxiliar para poder obtener el estado inicial de un automata con 
+-- estados equivalentes ya encontrados. Hace uso de comparación de substrings
+-- Recbie el estado incial y una lista de estados ya unidos.
+-- Regresa el nuevo estado inicial si es que el estado inicial original estaba
+-- contenido entre los estados equivalentes obtenidos del algoritmo de minimización
 minimizaInicial :: String -> [String] -> String
 minimizaInicial i eq = if null ni then i else ni
                      where ni = getString i eq
 
+-- Función auxiliar usada en la minimización de automatas. Hace uso de comparación y
+-- contención de substrings para poder obtener y/o eliminar un estado que ya estaba 
+-- en la lista de los nuevos estados mezclados, esto es, que el estado "qi" se elimina
+-- para ser emplazado por "qiqi+1..." en caso de que dicha equivalencia se haya encontrado.
+-- Recibe una lista de estados del automata original y la lista de automatas mezclados
+-- Regresa los nuevos estados del automata usando como referencia los estados ya mezclados
+-- y los que no fueron equivalentes.
 minimizaEstados :: [String] -> [String] -> [String]
 minimizaEstados [] nq = nq
 minimizaEstados (q:qs) nq 
   | contieneString q nq = (minimizaEstados qs nq)
   | otherwise = minimizaEstados qs ([q] ++ nq)
 
+-- Función auxiliar usada en la minimización de automatas. Similar a la función minimizaInicial
+-- el objetivo de esta función es obtener los nuevos estados finales obtenidos de la mezcla
+-- y juntarlos con los que ya eran finales y no resultaron en ninguna equivalencia.
+-- Recibe una lista de estados finales y los estados equivalentes
+-- Regresa una lista con los nuevos estados finales.
 minimizaFinales :: [String] -> [String] -> [String]
 minimizaFinales [] nq = []
 minimizaFinales (q:qs) nq 
@@ -119,7 +177,15 @@ minimizaFinales (q:qs) nq
   | otherwise = [ns] ++ minimizaFinales qs nq
   where ns = getString q nq
 
-
+-- Función auxiliar usada en la minimización del algoritmo. El objetivo es cambiar
+-- los estados de las transiciones por sus equivalentes mezclados obtenidos del algoritmo
+-- de minimización, haciendo uso de comparación de substrings. Es decir, que si por ejemplo
+-- se tiene una transición de la forma (q0, a, q1) y "q0q1" resultó ser un nuevo estado
+-- entonces dicha transición pasará a ser de la forma (q0q1, a, q0q1).
+-- Recibe la lista de mapeo de transiciones el automata original y 
+-- otra adicional donde se irán guardando las nuevas transiciones, además recibe la 
+-- lista de estados equivalentes.
+-- Regresa una lista que representa el mapeo de transiciones del automata minimizado.
 minimizaTransiciones :: [Trans_afd] -> [Trans_afd] -> [String] -> [Trans_afd]
 minimizaTransiciones [] nd _ = nd
 minimizaTransiciones (d:ds) nd s = minimizaTransiciones ds (nd ++ [(qbn, dt, qnn)]) s
@@ -129,21 +195,50 @@ minimizaTransiciones (d:ds) nd s = minimizaTransiciones ds (nd ++ [(qbn, dt, qnn
         qbn = if null subB then qb else subB 
         qnn = if null subN then qn else subN
 
+-- Función auxiliar usada para obtener el string de estados mezclados al que 
+-- pertence un estado. Se hace caso de un case ya que puede no pertenecer a
+-- ninguno de strings dados en la lista, además se hace uso de una lista por
+-- comprensión en el que se obtiene todos los strings con los que hace match
+-- nuestro string s1, pero por la forma en la que están diseñadas nuestras 
+-- funciones y automatas, esto solo devolverá una lista con un solo elemento 
+-- o la lista vacía en caso de que no haya matches, por lo que en ese caso
+-- se devuelve un string vacío para poder ser manejado en otras funciones
+-- que hagan uso de esta función.
+-- Recibe un estado en forma de string y una lista de estados.
+-- Regresa el estado al cuál pertenece un estado (e.g. q0 in q0q1)
 getString :: String -> [String] -> String
 getString s1 s2 = case [x | x <- s2, s1 `isInfixOf` x] of 
                 (x:_) -> x 
                 [] -> ""
 
+-- Función auxiliar similar a getString, con la única diferencia que esta solo
+-- devuelve un booleano en caso de que haya encontrado como substring de algún 
+-- string de ls.
+-- Recibe un estado y una lista de estados mezclados
+-- Regresa True en caso de que haya un match y no en otro caso.
 contieneString :: String -> [String] -> Bool 
 contieneString s1 ls = any (s1 `isInfixOf`) ls
 
-
+-- Función auxiliar que une los estados obtenidos del algoritmo de minimización,
+-- es decir, obtiene una lista de listas con los estados equivalentes, haciendo
+-- uso de nub y sort para poder eliminar duplicados dados por las operaciones
+-- recursivas hechas en uneListasIntersectadas.
+-- Recibe una lista de listas de estados y otra con los pares de listas de estados
+-- equivalentes. Regresa una lista de listas de strings con los pares equivalentes
+-- (e.g puede regresa [[q0, q1], [q3, q4, q5]])
 uneEstados:: [[String]] -> [[String]] -> [[String]]
 uneEstados [] _ = []
 uneEstados (q:qs) eq = nubSet ([nuevoQ] ++ uneEstados qs eq)
                   where nuevoQ = sortSet (nubSet (uneListasIntersectadas q eq))
---uneTransiciones (sp:sps) (d:ds)
 
+-- Función auxiliar usada para construir el automata minimizado, usada para 
+-- obtener todos los estados equivalentes y posteriormente poder mezclarlos
+-- se hace uso de insterct para obtener que pares de estados están en otra equivalencia
+-- y poder ir obteniendo los estados con los que otros están relacionados entre sí
+-- (e.g [[ab, bc], [bc, bd]] => [ab,bc,bd]) Adicionalmente se hace uso de nubSet en lugar
+-- de nub para un mejor performance de la función (puede que esto cambie).
+-- Recibe una lista de estados y la lista de los pares de estados equivalentes.
+-- Regresa una lista de estados con los que se es equivalente.
 uneListasIntersectadas :: [String] -> [[String]] -> [String]
 uneListasIntersectadas a [] = []
 uneListasIntersectadas a (x:xs)
@@ -224,6 +319,7 @@ estadosEquivalentes q m =
       ) listaCoordenadas
   in map (\(i, j) -> [q !! (j-1), q !! i]) equivalentes
 
+-- Automatas de prueba, se quitarán posteriormente
 a1 :: AFD
 a1 = AFD {
     estadosD = ["A", "B", "C"],
@@ -320,45 +416,3 @@ au = AFD {
     inicialD = "q0",
     finalesD = ["q3", "qUNR_B"]
 }
---marcaCasilla :: Matrix Int -> Matrix Int
-
--- Elementos del autómata finito determinista
--- type Estado = Int
--- type Simbolo = Char
--- type Delta = Estado -> Simbolo -> Estado
--- -- Quintupla del estado finito determinista
--- data AFD = AFD {
---     estados :: [Estado],
---     alfabeto :: [Simbolo],
---     delta :: Delta,
---     inicial :: Estado,
---     finales :: [Estado]
--- }
-
--- transita :: String -> Estado -> Delta -> Estado
--- transita [] q _ = q
--- transita (s:cs) q d = transita cs q' d
---    where q' = d q s
-
--- acepta :: String -> AFD -> Bool
--- acepta s (AFD _ _ d q0 f) = elem(transita s q0 d)f
-
-
--- -- Ejemplo de una autómata
--- deltaPar :: Delta
--- deltaPar 0 '0' = 0
--- deltaPar 0 '1' = 1
--- deltaPar 1 '0' = 1
--- deltaPar 1 '1' = 0
--- deltaPar _  _  = error "Símbolo inválido"
--- -- Automata
--- afdPar :: AFD
--- afdPar = AFD { 
---     estados  = [0,1],
---     alfabeto = ['0','1'],
---     delta    = deltaPar,
---     inicial  = 0,
---     finales  = [0]
--- }
-
--- --Añadir función minimizadora?
