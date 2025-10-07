@@ -3,12 +3,15 @@ module ReadFile
     string_to_regex,
     handle_contents,
     handle_contents2,
-    handle_contents3
+    handle_contents3,
+    handle_contents4,
+    handle_specs
 )
 where
 
 import GHC.Unicode
 import Regex
+import Data.List (isPrefixOf)
 
 ------------------------------------------------------------------------------------------
 -- Función para manejar una cadena leída del archivo y convertirla a una expresión regular
@@ -132,3 +135,69 @@ tres (x:xs) n p1 p
     | isSpace x = tres xs n p1 p
     | n == 0 = tres xs n p1 p
     | otherwise = tres xs n (p1++[x]) p
+
+
+-- Quita espacios del inicio y final
+trim :: String -> String
+trim = f . f
+  where f = reverse . dropWhile isSpace
+
+-- Detecta comentarios
+es_comentario :: String -> Bool
+es_comentario l =
+  let t = trim l
+  in null t || "--" `isPrefixOf` t
+
+----------------------------------------------------------
+-- handle_contents3 modificado:
+-- Ahora también ignora comentarios "--"
+-- y busca por nombre de token (String), no solo Char.
+----------------------------------------------------------
+handle_contents4 :: String -> String -> Expr
+handle_contents4 [] _ = error "Error al leer el archivo"
+handle_contents4 texto nombre =
+  buscar_linea (lines texto)
+  where
+    buscar_linea [] = error ("Token '" ++ nombre ++ "' no encontrado")
+    buscar_linea (l:ls)
+      | es_comentario l = buscar_linea ls
+      | otherwise =
+          let limpio = trim l
+          in if take (length nombre) limpio == nombre && elem '=' limpio
+                then 
+                    let 
+                    resto = drop1 $ dropWhile (/= '=') limpio
+                    bloque = unlines (resto : takeWhile es_parte_expr ls)
+                    in string_to_regex (trim bloque)
+                else buscar_linea ls
+
+----------------------------------------------------------
+-- handle_specs:
+-- Lee todas las líneas de un archivo de especificaciones IMP
+-- Devuelve [(nombreToken, Expr)]
+-- Ignora comentarios y espacios en blanco
+----------------------------------------------------------
+handle_specs :: String -> [(String, Expr)]
+handle_specs texto =
+  let ls = lines texto
+      lsValidas = filter (not . es_comentario) ls
+      lineasConExpr = filter (\l -> '=' `elem` l && not (null (trim l))) lsValidas
+      parseLinea l =
+        let (nombre, resto) = break (=='=') l
+        in (trim nombre, string_to_regex (trim (drop1 resto)))
+  in map parseLinea lineasConExpr
+
+----------------------------------------------------------
+-- drop1: versión segura de tail
+----------------------------------------------------------
+drop1 :: [a] -> [a]
+drop1 [] = []
+drop1 (_:xs) = xs
+
+----------------------------------------------------------
+-- Determina si una línea sigue siendo parte de la expresión
+----------------------------------------------------------
+es_parte_expr :: String -> Bool
+es_parte_expr l =
+  let t = trim l
+  in not (null t) && not (take 2 t == "--")

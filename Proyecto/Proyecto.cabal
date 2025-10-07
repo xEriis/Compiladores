@@ -36,6 +36,7 @@ library
   build-depends:
       base >=4.7 && <5
     , containers
+    , matrix
   default-language: Haskell2010
 
 executable Proyecto-exe
@@ -44,6 +45,8 @@ executable Proyecto-exe
       AFD
       AFN
       AFNe
+      Lexer
+      MDD
       ReadFile
       Regex
       Paths_Proyecto
@@ -56,6 +59,7 @@ executable Proyecto-exe
       Proyecto
     , base >=4.7 && <5
     , containers
+    , matrix
   default-language: Haskell2010
 
 test-suite Proyecto-test
@@ -72,4 +76,5 @@ test-suite Proyecto-test
       Proyecto
     , base >=4.7 && <5
     , containers
+    , matrix
   default-language: Haskell2010

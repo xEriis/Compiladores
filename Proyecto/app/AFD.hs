@@ -2,7 +2,8 @@ module AFD
 
 (
     AFD(..),
-    Trans_afd
+    Trans_afd,
+    minimiza
 )
 
 where
