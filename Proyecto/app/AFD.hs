@@ -8,7 +8,8 @@ module AFD
 
 where
 
-import Data.List (elemIndex, nub, intersect, (\\), sort, isInfixOf)
+import Data.List (intercalate, elemIndex, nub, intersect, (\\), sort, isInfixOf)
+import Data.List.Split (splitOn)
 -- Se tiene que importar así porque si no, hay un conflicto con el import de 
 -- Data.List ya que tienen funciones llamadas igual
 import qualified Data.Set as Set
@@ -130,10 +131,9 @@ minimiza (AFD q a d i f) = (AFD (minimizaEstados nq eqs) na (nub (minimizaTransi
   where lq = length q
         (AFD nq na nd ni nf) = eliminaInalcanzables (AFD q a d i f)
         nlq = length nq
-        eq = estadosEquivalentes nq (minimizaAux (AFD nq na nd ni nf) (matrix nlq nlq $ \(i,j) -> -1))
+        eq = estadosEquivalentes nq (minimizaAux (AFD nq na nd ni nf) (matrix nlq nlq $ \(i,j) -> 0))
         equ = uneEstados eq eq
-        eqs = [concat s | s <- equ]
-
+        eqs = [intercalate "," s | s <- equ]
 
 -- Función auxiliar para minimizar un AFD 
 -- Recibe un AFD, una matriz que representa nuestra tabla y le aplica el algoritmo
@@ -208,7 +208,7 @@ minimizaTransiciones (d:ds) nd s = minimizaTransiciones ds (nd ++ [(qbn, dt, qnn
 -- Recibe un estado en forma de string y una lista de estados.
 -- Regresa el estado al cuál pertenece un estado (e.g. q0 in q0q1)
 getString :: String -> [String] -> String
-getString s1 s2 = case [x | x <- s2, s1 `isInfixOf` x] of 
+getString s1 s2 = case [x | x <- s2, s1 `elem` (splitOn "," x)] of 
                 (x:_) -> x 
                 [] -> ""
 
@@ -218,7 +218,7 @@ getString s1 s2 = case [x | x <- s2, s1 `isInfixOf` x] of
 -- Recibe un estado y una lista de estados mezclados
 -- Regresa True en caso de que haya un match y no en otro caso.
 contieneString :: String -> [String] -> Bool 
-contieneString s1 ls = any (s1 `isInfixOf`) ls
+contieneString s1 ls = any (s1 `elem`) (map (splitOn ",") ls)
 
 -- Función auxiliar que une los estados obtenidos del algoritmo de minimización,
 -- es decir, obtiene una lista de listas con los estados equivalentes, haciendo
@@ -259,7 +259,11 @@ uneListasIntersectadas a (x:xs)
 -- lista de estados, esto para hacer las modificaciones de manera correcta
 -- y acorde a la tabla de equivalencias del algoritmo visto en clase
 operaTabla1 :: AFD -> Matrix Int -> Matrix Int
-operaTabla1 (AFD q _ _ _ f) table = mapPos(\(i,j) x -> if (i < length q) && (condicion1 f (q !! (j-1)) (q !! (i))) && j <= i then 1 else 0) table
+operaTabla1 (AFD q _ _ _ f) table = mapPos (operacion) table
+  where
+    operacion (i, j) valorActual 
+      | j < i && (condicion1 f (q !! (j-1)) (q !! (i-1))) = 1
+      | otherwise = valorActual
 
 -- Función auxiliar para el primer paso del algoritmo de minimización
 -- Esta función se encarga de revisar la primera condición, es decir 
@@ -283,8 +287,12 @@ operaTabla2 (AFD q a d i f) table newTable
 -- a modificar. 
 -- Regresa una matriz modificada.
 operaTabla2Aux :: [String] -> [Char] -> [Trans_afd] -> Matrix Int -> Matrix Int
-operaTabla2Aux _ [] _ m = m
-operaTabla2Aux q (c:cs) d m = operaTabla2Aux q cs d (mapPos(\(i,j) x -> if (x == 0) && (i < length q) && (j <= i) && (checaCasilla q (checaTransicion (q !! (j-1)) c d) (checaTransicion (q !! i) c d) m) then 1 else x) m)
+operaTabla2Aux q [] _ m = m
+operaTabla2Aux q (c:cs) d m = operaTabla2Aux q cs d (mapPos (operacion) m)
+  where
+    operacion (i, j) valorActual 
+      | valorActual == 0 && j < i && (checaCasilla q (checaTransicion (q !! (j-1)) c d) (checaTransicion (q !! (i-1)) c d) m) = 1
+      | otherwise = valorActual
 
 -- Función auxiliar para la función auxiliar de la segunda operación del algoritmo
 -- de minimización, esta se encarga de revisar la condición dada por el algoritmo
@@ -293,13 +301,15 @@ operaTabla2Aux q (c:cs) d m = operaTabla2Aux q cs d (mapPos(\(i,j) x -> if (x ==
 -- casilla en la iteración actual se marque, si no, se regresa False
 checaCasilla :: [String] -> String -> String -> Matrix Int -> Bool
 checaCasilla q j i m 
-  | null i || null j = False
-  | otherwise = (j /= i) && (m ! (maxIdx, minIdx+1) == 1)
+  | null i && null j = False
+  | null i || null j = True 
+  | j == i = False         
+  | otherwise = (m ! (maxIdx, minIdx) == 1)
   where 
     Just qi = elemIndex i q 
     Just qj = elemIndex j q
-    qin = if qi == 0 then qi + 1 else qi 
-    qjn = if qj == 0 then qj + 1 else qj 
+    qin = qi + 1
+    qjn = qj + 1
     minIdx = min qin qjn 
     maxIdx = max qin qjn
 
@@ -315,12 +325,10 @@ estadosEquivalentes q m =
   let
     listaCoordenadas = [(i, j) | i <- [1..nrows m], j <- [1..ncols m]]
     equivalentes = filter (\(i, j) ->
-      let x = m ! (i,j)
-      in x == 0 && j <= i && i < length q
+      j < i && (m ! (i, j) == 0)
       ) listaCoordenadas
-  in map (\(i, j) -> [q !! (j-1), q !! i]) equivalentes
+  in map (\(i, j) -> [q !! (j-1), q !! (i-1)]) equivalentes
 
--- Automatas de prueba, se quitarán posteriormente
 a1 :: AFD
 a1 = AFD {
     estadosD = ["A", "B", "C"],
