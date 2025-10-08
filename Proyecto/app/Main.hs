@@ -60,7 +60,7 @@ main = do
 
     ------------------------------------------
     -- Solo para probar palabras reservadas:
-    let tokensPrueba = [("res", expr_res)]
+    let tokensPrueba = [("id", expr_id)]
     ------------------------------------------
 
     -- let tokensPrueba = [("res", expr_res)] 
@@ -98,7 +98,7 @@ main = do
             afdMin = minimiza afdRaw
 
         putStrLn "\nAFNe (regex_to_AFNe):"
-        -- print afne
+        print afne
 
         putStrLn "\nAFN (afnEp_to_AFN):"
         -- print afn

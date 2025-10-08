@@ -3,7 +3,8 @@ module AFD
 (
     AFD(..),
     Trans_afd,
-    minimiza
+    minimiza,
+    acepta
 )
 
 where
@@ -14,6 +15,7 @@ import Data.List.Split (splitOn)
 -- Data.List ya que tienen funciones llamadas igual
 import qualified Data.Set as Set
 import Data.Matrix
+import Data.Char
 
 -- Función auxiliar para mejorar la complejidad de quitar elementos dublicados
 -- en una lista, lo convierte a un conjunto para usar un arbol
@@ -50,9 +52,45 @@ transita q (s:ss) d
 checaTransicion :: String -> Char -> [Trans_afd] -> String
 checaTransicion _ _ [] = []
 checaTransicion q s (x:xs)
+  | q == qo && ts == '#' && s == '1' = qn
+  | q == qo && ts == '#' && s == '2' = qn 
+  | q == qo && ts == '#' && s == '3' = qn 
+  | q == qo && ts == '#' && s == '4' = qn 
+  | q == qo && ts == '#' && s == '5' = qn 
+  | q == qo && ts == '#' && s == '6' = qn 
+  | q == qo && ts == '#' && s == '7' = qn 
+  | q == qo && ts == '#' && s == '8' = qn 
+  | q == qo && ts == '#' && s == '9' = qn 
+  | q == qo && ts == '@' && s1 == 'a' = qn
+  | q == qo && ts == '@' && s1 == 'b' = qn 
+  | q == qo && ts == '@' && s1 == 'c' = qn 
+  | q == qo && ts == '@' && s1 == 'd' = qn 
+  | q == qo && ts == '@' && s1 == 'e' = qn 
+  | q == qo && ts == '@' && s1 == 'f' = qn 
+  | q == qo && ts == '@' && s1 == 'g' = qn 
+  | q == qo && ts == '@' && s1 == 'h' = qn 
+  | q == qo && ts == '@' && s1 == 'i' = qn 
+  | q == qo && ts == '@' && s1 == 'j' = qn 
+  | q == qo && ts == '@' && s1 == 'k' = qn 
+  | q == qo && ts == '@' && s1 == 'l' = qn 
+  | q == qo && ts == '@' && s1 == 'm' = qn 
+  | q == qo && ts == '@' && s1 == 'n' = qn 
+  | q == qo && ts == '@' && s1 == 'o' = qn 
+  | q == qo && ts == '@' && s1 == 'p' = qn 
+  | q == qo && ts == '@' && s1 == 'q' = qn 
+  | q == qo && ts == '@' && s1 == 'r' = qn 
+  | q == qo && ts == '@' && s1 == 's' = qn 
+  | q == qo && ts == '@' && s1 == 't' = qn 
+  | q == qo && ts == '@' && s1 == 'u' = qn 
+  | q == qo && ts == '@' && s1 == 'v' = qn 
+  | q == qo && ts == '@' && s1 == 'w' = qn 
+  | q == qo && ts == '@' && s1 == 'x' = qn 
+  | q == qo && ts == '@' && s1 == 'y' = qn
+  | q == qo && ts == '@' && s1 == 'z' = qn 
   | q == qo && s == ts = qn
   | otherwise = checaTransicion q s xs
   where (qo, ts, qn) = x
+        s1 = toLower(s)
 
 -- Solamente checa si transita regresa un estado final
 acepta :: String -> AFD -> Bool
