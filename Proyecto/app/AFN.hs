@@ -2,20 +2,13 @@ module AFN
 (
     AFN(..),
     Trans_afn,
-    afn_to_AFD,
-    afn_ejemplo3 -- quitar al final
+    afn_to_AFD
 )
 where
 
--- Elementos del autómata finito no determinista
--- BIBLIOTECAS (están comentadas para que no generen warning)
-
 -- import Data.List (nub,sort)
 import AFD
--- | Abstracción de una transición no determinista, 
--- igual que la anterior, sin considerar epsilón, pero
--- sigue siendo no determinista. 
-type Trans_afn = (String, Char, [String]) -- delta en nuestra definición
+type Trans_afn = (String, Char, [String])
 data AFN = AFN {
     estadosN :: [String], 
     alfabetoN :: [Char],
@@ -25,111 +18,115 @@ data AFN = AFN {
     }
   deriving (Show)
 
--- Como anotación (En teoría podríamos mandar a llamar las funciones para no utilizar el where)
--- Ahora el AFD está bien definido para que @Victor pueda hacer la implementación de AFD a AFD minimo con los datos esperados
 afn_to_AFD :: AFN -> AFD
 afn_to_AFD afn = AFD {estadosD = estadosAFD,
                     alfabetoD = alfabetoN afn,
                     transicionesD = transicionesAFD,
-                    inicialD = nombreEstado [inicialN afn],
+                    inicialD = inicialAFD,
                     finalesD = finalesAFD
 }
   where
     -- Nuevos estados
     recEstadosAFD = generaEstadosAFD afn [[inicialN afn]] []
+    estadoSinEmptyAFD = filter (/= ["empty"]) recEstadosAFD
+    mapeo = generalLabel estadoSinEmptyAFD
     
-    -- * Label de los estados
-    estadosAFD = map nombreEstado recEstadosAFD
+    -- Label de los estados
+    estadosAFD = map (mapearEstado mapeo) estadoSinEmptyAFD
 
     -- Transiciones
-    transicionesAFD = generarTransicionesAFD afn recEstadosAFD
+    transicionesAFD = generarTransicionesAFD afn estadoSinEmptyAFD mapeo
 
     -- Finales
-    finalesAFD = encuentraFinalesAFD afn recEstadosAFD
+    finalesAFD = encuentraFinalesAFD afn estadoSinEmptyAFD mapeo
+
+    -- Inicial
+    inicialAFD = mapearEstado mapeo [inicialN afn]
 
 
--- Metodo para generar los estados posibles del AFD explorando el afn
+-- Metodo principal para generar los estados posibles del AFD explorando el afn
 -- Toma 3 parámetros (afn, Lista de estados a los que vamos llegando que estan en Q', Lista de estados que ya agregamos)
 -- Regresa una lista de todos los estados posibles (y conjuntos convertidos en un solo estado) del AFD
 generaEstadosAFD :: AFN -> [[String]] -> [[String]] -> [[String]]
-generaEstadosAFD _ []  agregados = agregados
+generaEstadosAFD _ [] agregados = agregados
 generaEstadosAFD afn (current:resto) agregados
     | current `elem` agregados = generaEstadosAFD afn resto agregados -- si llegamos a un estado visitado ya no lo volvemos a checar
-    | otherwise = let -- Para cada simbolo (del alfabeto) vemos a que estado llegamos desde el actual
-                        -- Nuevos estados a los que llegamos
-                        nuevosEstados = [destino | simbolo <- alfabetoN afn,
-                                                let destino = transicionAux afn current simbolo, not (null destino)]
-                        -- Filtramos los estados no esten en nuestros ya agregados
-                        noAgregados = filter (`notElem` (current:resto ++ agregados)) nuevosEstados
+    | otherwise = let 
+                      -- Para cada simbolo (del alfabeto) vemos a que estado llegamos desde el actual
+                      -- Nuevos estados a los que llegamos
+                      nuevosEstados = [destino | 
+                                       simbolo <- alfabetoN afn,
+                                       let rDestino = transicionAux afn current simbolo,
+                                       let destino = if null rDestino || rDestino == ["empty"] -- Si queremos que exita el estado muerto entonces 
+                                                     then [] 
+                                                     else rDestino,
+                                       not (null destino)]
+                      noAgregados = filter (`notElem` (current:resto ++ agregados)) nuevosEstados
+                  in generaEstadosAFD afn (resto ++ noAgregados) (current:agregados)
 
-                    in generaEstadosAFD afn (resto ++ noAgregados) (current:agregados)
+-- Metodo para generar las transiciones del AFD dados los únicos estados posibles que tendrá (sin calcular el conjunto potencia del afn)
+generarTransicionesAFD ::AFN -> [[String]] -> [([String], String)] -> [Trans_afd]
+generarTransicionesAFD afn estadosAFD mapeo =
+    [ (mapearEstado mapeo origen, simbolo, mapearEstado mapeo destino)
+    | origen <- estadosAFD,
+      simbolo <- alfabetoN afn,
+      let destino = transicionAux afn origen simbolo,
+      let des = if null destino then [] else destino,
+      not (null destino)
+    ]
 
--- Aux
--- Metodo para calcular la transicion que necesitamos en el método anterior para ver a que estado(s) nos lleva, este método acepta un conjunto de estados
+-- Método general para renombrar los estados del AFD secuencialmente
+generalLabel :: [[String]] -> [([String], String)]
+generalLabel estadosAFD = zip estadosAFD nombres
+  where
+    nombres = [ "q" ++ show i | i <- [0..length estadosAFD - 1] ]
+
+-- Método para encontrar a los estados finales
+encuentraFinalesAFD :: AFN -> [[String]] -> [([String], String)] -> [String]
+encuentraFinalesAFD afn estadosAFD mapeo =
+    [ mapearEstado mapeo conjunto
+    | conjunto <- estadosAFD,
+      finalN afn `elem` conjunto
+    ]
+
+-- Método auxiliar para calcular la transición de un conjunto de estados con un símbolo
 transicionAux :: AFN -> [String] -> Char -> [String]
-transicionAux afn conjuntoEdos sim = eliminarDup [destino | estado <- conjuntoEdos,
-                                                            destino <- findTrans afn estado sim]
--- Aux
--- Metodo para saber la transicion de un estado con un simbolo, regresa una lista de estados (por ser no determinista)
+transicionAux afn conjuntoEdos sim = 
+  let destinos = eliminarDup [destino | estado <- conjuntoEdos,
+                                        destino <- findTrans afn estado sim]
+
+  in if null destinos then [] else destinos
+
+-- Método auxiliar para encontrar las transiciones de UN solo estado con un símbolo 
+-- regresa una lista de estados (por ser no determinista)
 findTrans :: AFN -> String -> Char -> [String]
 findTrans afn estado simbolo = [destino | (origen, sim, destinos) <- transicionesN afn,
                                         origen == estado, sim == simbolo,
                                         destino <- destinos ]
-
--- Aux
--- Elimina duplicados de una lista manteniendo el orden
+                                      
+-- Método auxiliar elimina duplicados de una lista manteniendo el orden
 eliminarDup :: [String] -> [String]
 eliminarDup [] = []
 eliminarDup (x:xs)
     | x `elem` xs = eliminarDup xs
     | otherwise = x : eliminarDup xs
 
--- Renombrar estados con notacion de conjuntos
+-- Método para renombrar estados con notacion de conjuntos
 nombreEstado :: [String] -> String
-nombreEstado [] = "[]" -- Aqui al momento de hacer la tabla de transiciones, hay estados que con ese simbolo no van a ningun lado, entonces estan como empty pero siguiendo la notacion pues puse []
+nombreEstado [] = "empty" -- Aqui al momento de hacer la tabla de transiciones, hay estados que con ese simbolo no van a ningun lado, entonces estan como empty pero siguiendo la notacion pues puse []
+nombreEstado ["empty"] = "empty"
 nombreEstado estados = "{" ++ separa "," (estados) ++ "}" -- Notacion de los estados como conjuntos
 
--- Une strings con un separador
+-- Método auxiliar para separar los estados que se convierten en un solo estado del AFD
 separa :: String -> [String] -> String
 separa _ [] = ""
 separa _ [x] = x
 separa sep (x:xs) = x ++ sep ++ separa sep xs
 
--- Metodo para generar las transiciones del AFD dados los únicos estados posibles que tendrá (sin calcular el conjunto potencia del afn)
-generarTransicionesAFD :: AFN -> [[String]] ->[Trans_afd]
-generarTransicionesAFD afn estadosAFD =
-    [ (nombreEstado origen, simbolo, nombreEstado destino)
-    | origen <- estadosAFD,
-      simbolo <- alfabetoN afn,
-      let destino = transicionAux afn origen simbolo,
-      not(null origen)
-    ]
-
--- Método para encontrar a los estados finales
-encuentraFinalesAFD :: AFN -> [[String]] -> [String]
-encuentraFinalesAFD afn estadosAFD =
-    [ nombreEstado conjunto
-    | conjunto <- estadosAFD,
-      finalN afn `elem` conjunto
-    ]
-
--- Ejemplo (0 1* (0+1)) 
-ejemplo3 :: [String]
-ejemplo3 = ["q0", "q1", "q2"]
-
-transiciones_ejemplo3 :: [Trans_afn]
-transiciones_ejemplo3 = [
-    ("q0", '0', ["q1"]),
-    ("q1", '0', ["q2"]),
-    ("q1", '1', ["q1", "q2"])
-    ]
-
--- Crea la instancia del AFN
-afn_ejemplo3 :: AFN
-afn_ejemplo3 = AFN {
-    estadosN = ejemplo3,
-    alfabetoN = ['0', '1'],
-    transicionesN = transiciones_ejemplo3,
-    inicialN = "q0",
-    finalN = "q2"
-}
+-- Función para mapear un estado a su nuevo nombre
+mapearEstado :: [([String], String)] -> [String] -> String
+mapearEstado mapeo estado 
+    | null estado = "empty"
+    | otherwise = case lookup estado mapeo of
+        Just nombre -> nombre
+        Nothing -> nombreEstado estado
