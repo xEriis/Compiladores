@@ -213,9 +213,7 @@ main = do
     ----------------------------------------
     putStrLn "\n=== Prueba del lexer ==="
     putStrLn "\nAnalizando cadena de prueba:"
-    -- falla con for:(
-    -- no falla con: if, then, while, do 
-    let entrada = "then"
+    let entrada = "for"
     putStrLn $ "  " ++ show entrada
     
     putStrLn "DEBUG: llamar a longestMatchM directamente:"
