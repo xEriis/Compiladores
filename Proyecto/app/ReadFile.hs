@@ -32,9 +32,9 @@ handle_contents2 x =  [string_to_regex $ line_content x []] ++ (handle_contents2
 -- Función que dado un archivo con expresiones regulares, regresa la indicada con un caracter
 -- El arhcivo debe de indicar las expresiones regulares con un caracter(id) seguido de un '=' y la expresión regular con o sin espacios
 -- Por ejemplo:
--- a= Concat (Term 1) (Term 2)
--- b= (Term 1)
--- c= (term 2)
+-- a= Concat [Term 1] [Term 2]
+-- b= [Term 1]
+-- c= [term 2]
 -- La función recibe como parámetro el id (a,b,c)
 ------------------------------------------------------------------------------------------------------------------------------------------
 handle_contents3 :: [Char] -> Char -> Expr
@@ -65,9 +65,9 @@ line_content (x:xs) p
 ---------------------------------------------------------
 -- Función que recibe una cadena y la tranforma al Data Expr
 -- El formato para las expresiones regulares es:
--- OR (lw) (rw) 
--- Concat (lw) (rw)
--- Kleene (lw)
+-- OR [lw] [rw] 
+-- Concat [lw] [rw]
+-- Kleene [lw]
 -- Term x
 -- Donde x es un caracter
 -- lw y rw son expresiones regulares
@@ -76,7 +76,7 @@ string_to_regex :: [Char] -> Expr
 string_to_regex [] = error "Formato incorrecto"
 string_to_regex (x:xs)
     | isSpace x = string_to_regex xs
-    | x == '(' = string_to_regex xs
+    | x == '[' = string_to_regex xs
     | x == 'T' = Term (find_term (x:xs))
     | x == 'O' = Or (string_to_regex y) (string_to_regex y1)
     | x == 'C' = Concat (string_to_regex y) (string_to_regex y1)
@@ -128,10 +128,10 @@ cabeza_e (x:xs)
 tres :: [Char] -> Int -> [Char] -> [[Char]] -> [[Char]]
 tres [] _ _ _ = []
 tres (x:xs) n p1 p
-    | x == '(' && n == 0 = tres xs (n+1) (p1) p
-    | x == '(' = tres xs (n+1) (p1++[x]) p
-    | x == ')' && n == 1 = (p++[p1]++(tres xs 0 [] []))
-    | x == ')' = tres xs (n-1) (p1++[x]) p
+    | x == '[' && n == 0 = tres xs (n+1) (p1) p
+    | x == '[' = tres xs (n+1) (p1++[x]) p
+    | x == ']' && n == 1 = (p++[p1]++(tres xs 0 [] []))
+    | x == ']' = tres xs (n-1) (p1++[x]) p
     | isSpace x = tres xs n p1 p
     | n == 0 = tres xs n p1 p
     | otherwise = tres xs n (p1++[x]) p
