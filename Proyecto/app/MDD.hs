@@ -9,6 +9,7 @@ module MDD
 
 import Data.List (nub)
 import AFD
+import Data.Char (isAlpha, isDigit, toLower)
 
 -- Tipo de transición de la MDD
 type TransM = (String, Char, String)
@@ -72,11 +73,19 @@ buildMDD toks =
 
 
 
+-- función auxiliar: compara el símbolo de la transición con el carácter de entrada
+-- soporta: '#' = cualquier dígito, '@' = cualquier letra, caso especial: literal otherwise
+symbolMatches :: Char -> Char -> Bool
+symbolMatches ts c
+  | ts == '#'  = isDigit c          -- '#' representa clase dígito
+  | ts == '@'  = isAlpha c          -- '@' representa clase letra (acepta mayúsculas/minúsculas)
+  | otherwise  = ts == c            -- coincidencia literal
+
 -- Simulación simple (devuelve último estado alcanzado)
 transitaM :: String -> String -> [TransM] -> String
 transitaM q [] _ = q
 transitaM q (c:cs) d =
-  case [qn | (q0, sym, qn) <- d, q0 == q, sym == c] of
+  case [qn | (q0, sym, qn) <- d, q0 == q, symbolMatches sym c] of
     (next:_) -> transitaM next cs d
     []       -> q
 
@@ -89,7 +98,7 @@ aceptaM s mdd@(MDD _ _ _ q0 f) = aux q0 s Nothing
         Just tok -> Just tok
         Nothing  -> lastFinal
     aux q (c:cs) lastFinal =
-      let nextStates = [qn | (q0', sym, qn) <- transicionesM mdd, q0' == q, sym == c]
+      let nextStates = [qn | (q0', sym, qn) <- transicionesM mdd, q0' == q, symbolMatches sym c]
           lastFinal' = case lookup q f of
                          Just tok -> Just tok
                          Nothing  -> lastFinal

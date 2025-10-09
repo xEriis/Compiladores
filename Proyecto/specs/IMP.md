@@ -88,7 +88,7 @@ bool = Or
 ------------------------------------------------------
 -- Operadores booleanos
 ------------------------------------------------------
-op_bol = Or
+op_bool = Or
             [Concat [Term n] [Concat [Term o] [Term t]]]
             [Or [Concat [Term a] [Concat [Term n] [Term d]]]
                 [Concat [Term o] [Term r]]]
