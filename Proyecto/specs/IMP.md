@@ -75,8 +75,8 @@ punt = Term ;
 -- Delimitadores
 ------------------------------------------------------
 delim = Or 
-          [Term { ]
-          [Or [Term } ] [Or [Term ( ] [Term ) ]]]
+          [Term {]
+          [Or [Term }] [Or [Term (] [Term )]]]
 
 ------------------------------------------------------
 -- Booleanos

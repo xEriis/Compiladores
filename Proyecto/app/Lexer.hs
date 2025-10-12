@@ -5,6 +5,7 @@ import Data.Char (isSpace, isAlpha, isDigit)
 import Data.Maybe (catMaybes)
 import Data.List (maximumBy)
 import Data.Function (on)
+-- import AFD
 
 -- symbolMatches: compara símbolo de transición con carácter de entrada.
 -- '#' => cualquier dígito, '@' => cualquier letra, en otro caso coincidencia literal.
@@ -16,40 +17,41 @@ symbolMatches ts c
 
 -- Busca el prefijo más largo aceptado por algún token de la MDD
 -- Retorna (token, lexema, resto)
+-- longestMatchM: ahora lastTok guarda (token, lexema, resto_en_el_momento)
 longestMatchM :: MDD -> String -> Maybe (String, String, String)
 longestMatchM mdd input = aux (inicialM mdd) Nothing "" input
   where
-    -- aux estado actual -> último token final encontrado (token,lexema) -> lexema en construcción -> resto -> resultado
-    aux :: String -> Maybe (String, String) -> String -> String -> Maybe (String, String, String)
+    -- aux :: estadoActual -> Maybe (token,lexema,resto) -> lexemaEnConstruccion -> restoActual -> resultado
+    aux :: String -> Maybe (String,String,String) -> String -> String -> Maybe (String,String,String)
     aux _ Nothing "" [] = Nothing
 
+    -- fin de entrada: si el estado actual es final, devolverlo; si no, devolver el lastTok (ya contiene su resto)
     aux q lastTok bestMatch [] =
       case lookup q (finalesM mdd) of
-        Just tok -> Just (tok, bestMatch, [])
-        Nothing  -> case lastTok of
-                      Just (tok', lexema) -> Just (tok', lexema, [])
-                      Nothing             -> Nothing
+        Just tok -> Just (tok, bestMatch, [])   -- estado actual es final y rest es vacío
+        Nothing  -> lastTok                     -- fallback al último final conocido (si existe)
 
-    aux q lastTok bestMatch (c:cs) =
-      let nextStates = [ qn | (q0, sym, qn) <- transicionesM mdd, q0 == q, symbolMatches sym c ]
-          lastTok'   = case lookup q (finalesM mdd) of
-                         Just tok -> Just (tok, bestMatch)
-                         Nothing  -> lastTok
+    -- caso general: hay al menos un caracter
+    aux q lastTok bestMatch rest@(c:cs) =
+      let -- todas las transiciones posibles desde q con el símbolo c
+        nextStates = [qn | (q0, sym, qn) <- transicionesM mdd, q0 == q, symbolMatches sym c]
+        -- qn = checaTransicion q c (transicionesM mdd)
+        -- nextStates = if qn /= [] then [qn] else []
+          -- si el estado actual es final, lo recordamos junto con el lexema y, **muy importante**, el resto en ese momento
+        lastTok' = case lookup q (finalesM mdd) of
+                      Just tok -> Just (tok, bestMatch, rest)
+                      Nothing  -> lastTok
       in case nextStates of
-           [] -> case lastTok' of
-                   Just (tok, lexema) -> Just (tok, lexema, c:cs)
-                   Nothing            -> Nothing
-           _  -> -- si hay varias ramas (debería ser raro en un AFD limpio), probamos todas y elegimos la mejor
-                 let results = map (\next -> aux next lastTok' (bestMatch ++ [c]) cs) nextStates
-                 in chooseBest results lastTok' (c:cs)
+           [] -> lastTok'  -- no hay transiciones: fallback a lastTok' (si existe) o Nothing
+           _  -> -- hay una o más ramas: explorar y elegir la mejor (lexema más largo)
+                let results = map (\next -> aux next lastTok' (bestMatch ++ [c]) cs) nextStates
+                in chooseBest results lastTok' rest
 
--- Elige el resultado con lexema más largo; si ninguna rama devuelve Just, usa el lastTokFallback.
-chooseBest :: [Maybe (String,String,String)] -> Maybe (String,String) -> String -> Maybe (String,String,String)
-chooseBest res lastTokFallback rest =
+-- chooseBest ahora trabaja con Maybe triples (tok,lexema,resto)
+chooseBest :: [Maybe (String,String,String)] -> Maybe (String,String,String) -> String -> Maybe (String,String,String)
+chooseBest res lastTokFallback _rest =
   case catMaybes res of
-    [] -> case lastTokFallback of
-            Just (tok,lexema) -> Just (tok, lexema, rest)
-            Nothing           -> Nothing
+    [] -> lastTokFallback
     ys -> Just $ maximumBy (compare `on` (\(_,lexema,_) -> length lexema)) ys
 
 -- Lexer: repetidamente toma el prefijo más largo y lo devuelve como token

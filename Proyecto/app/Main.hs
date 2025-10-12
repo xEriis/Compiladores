@@ -194,7 +194,7 @@ main = do
 
     -- 2. Construimos la MDD con todos los AFDs
     let mdd = buildMDD afds
-    putStrLn "\nTransiciones desde MDD_START:"
+    putStrLn "\nTransiciones desde MDD_0:"
     mapM_ print [t | t@(q0,_,_) <- transicionesM mdd, q0 == inicialM mdd]
 
     -- PARA TRANSICIONES DUPLICADAS:
@@ -224,7 +224,7 @@ main = do
     ----------------------------------------
     putStrLn "\n=== Prueba del lexer ==="
     putStrLn "\nAnalizando cadena de prueba:"
-    let entrada = "x=3+1; if (true) { ifo:=5}"
+    let entrada = "{}(){}3+1id for ifa if(true){x1:=x2+2}//hola;"
     putStrLn $ "  " ++ show entrada
     
     putStrLn "DEBUG: llamar a longestMatchM directamente:"

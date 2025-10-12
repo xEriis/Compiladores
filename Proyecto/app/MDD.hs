@@ -2,25 +2,24 @@ module MDD
 (
     MDD(..),
     TransM,
-    buildMDD,
-    transitaM,
-    aceptaM
+    buildMDD
+
 ) where
 
 import Data.List (nub)
-import AFD
-import Data.Char (isAlpha, isDigit, toLower)
+import AFD -- para checar transicion
+import Data.Char (isAlpha, isDigit)
 
 -- Tipo de transición de la MDD
 type TransM = (String, Char, String)
 
 -- Definición de la Máquina Discriminadora Determinista
 data MDD = MDD {
-    estadosM      :: [String],
-    alfabetoM     :: [Char],
-    transicionesM :: [TransM],
-    inicialM      :: String,
-    finalesM      :: [(String, String)]
+    estadosM      :: [String], -- todos los estados de la MDD
+    alfabetoM     :: [Char], -- alfabeto reconocido
+    transicionesM :: [TransM], -- transiciones (origen, símbolo, destino)
+    inicialM      :: String, -- estado inicial
+    finalesM      :: [(String, String)] -- (estado final, token asociado)
 } deriving (Show)
 
 -- Prefija (normaliza) los nombres de los estados de un AFD
@@ -50,7 +49,7 @@ buildMDD toks =
 
       -- 2) transiciones desde MDD_0: toma cada transición que parte del estado inicial del AFD
       -- Para cada AFD: por cada transición que salga del estado inicial,
-      -- añadimos una transición desde "MDD_START" con la misma etiqueta.
+      -- añadimos una transición desde "MDD_0" con la misma etiqueta.
       arranques = [ ("MDD_0", sym, q2)
                     | (_, a) <- prefijos
                     , (q1, sym, q2) <- transicionesD a
@@ -70,38 +69,3 @@ buildMDD toks =
       inicialM = inicial,
       finalesM = finales
     }
-
-
-
--- función auxiliar: compara el símbolo de la transición con el carácter de entrada
--- soporta: '#' = cualquier dígito, '@' = cualquier letra, caso especial: literal otherwise
-symbolMatches :: Char -> Char -> Bool
-symbolMatches ts c
-  | ts == '#'  = isDigit c          -- '#' representa clase dígito
-  | ts == '@'  = isAlpha c          -- '@' representa clase letra (acepta mayúsculas/minúsculas)
-  | otherwise  = ts == c            -- coincidencia literal
-
--- Simulación simple (devuelve último estado alcanzado)
-transitaM :: String -> String -> [TransM] -> String
-transitaM q [] _ = q
-transitaM q (c:cs) d =
-  case [qn | (q0, sym, qn) <- d, q0 == q, symbolMatches sym c] of
-    (next:_) -> transitaM next cs d
-    []       -> q
-
--- aceptaM: devuelve el token del último estado final alcanzado mientras recorre la cadena
-aceptaM :: String -> MDD -> Maybe String
-aceptaM s mdd@(MDD _ _ _ q0 f) = aux q0 s Nothing
-  where
-    aux q [] lastFinal =
-      case lookup q f of
-        Just tok -> Just tok
-        Nothing  -> lastFinal
-    aux q (c:cs) lastFinal =
-      let nextStates = [qn | (q0', sym, qn) <- transicionesM mdd, q0' == q, symbolMatches sym c]
-          lastFinal' = case lookup q f of
-                         Just tok -> Just tok
-                         Nothing  -> lastFinal
-      in case nextStates of
-           (next:_) -> aux next cs lastFinal'
-           []       -> lastFinal'

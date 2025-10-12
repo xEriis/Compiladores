@@ -4,7 +4,8 @@ module AFD
     AFD(..),
     Trans_afd,
     minimiza,
-    acepta
+    acepta,
+    checaTransicion
 )
 
 where
