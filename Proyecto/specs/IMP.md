@@ -53,18 +53,30 @@ op_rel = Or
           [Term <] 
           [Or [Term >] [Term =]]
 
+
 ------------------------------------------------------
--- Palabras reservadas
+-- Palabras reservadas de Condicionales
 ------------------------------------------------------
-res = Or
-        [Concat [Term i] [Term f]]
-        [Or [Concat [Term t] [Concat [Term h] [Concat [Term e] [Term n]]]]
-            [Or [Concat [Term e] [Concat [Term l] [Concat [Term s] [Term e]]]]
-                [Or [Concat [Term w] [Concat [Term h] [Concat [Term i] [Concat [Term l] [Term e]]]]]
-                    [Or [Concat [Term d] [Term o]]
-                        [Or [Concat [Term f] [Concat [Term o] [Term r]]]
-                            [Concat [Term s] [Concat [Term k] [Concat [Term i] [Term p]]]]]]]]
-        ]
+res_cond = Or
+            [Concat [Term i] [Term f]]
+            [Or 
+              [Concat [Term t] [Concat [Term h] [Concat [Term e] [Term n]]]]
+              [Concat [Term e] [Concat [Term l] [Concat [Term s] [Term e]]]]]
+
+
+------------------------------------------------------
+-- Palabras reservadas de Ciclos
+------------------------------------------------------
+res_cicle = Or
+            [Concat [Term w] [Concat [Term h] [Concat [Term i] [Concat [Term l] [Term e]]]]]
+            [Or 
+              [Concat [Term d] [Term o]]
+              [Concat [Term f] [Concat [Term o] [Term r]]]]
+
+------------------------------------------------------
+-- Palabras reservadas extra
+------------------------------------------------------
+res_extra = Concat [Term s] [Concat [Term k] [Concat [Term i] [Term p]]]
 
 ------------------------------------------------------
 -- Puntuación

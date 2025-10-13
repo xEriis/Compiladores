@@ -26,7 +26,10 @@ main = do
     let expr_op_a = handle_contents4 contents "op_arit"
     let expr_asig = handle_contents4 contents "asign"
     let expr_op_rel = handle_contents4 contents "op_rel"
-    let expr_res = handle_contents4 contents "res"
+    -- let expr_res = handle_contents4 contents "res"
+    let expr_res_cond = handle_contents4 contents "res_cond"
+    let expr_res_cicle = handle_contents4 contents "res_cicle"
+    let expr_res_extra = handle_contents4 contents "res_extra"
     let expr_punt = handle_contents4 contents "punt"
     let expr_delim = handle_contents4 contents "delim"
     let expr_bool = handle_contents4 contents "bool"
@@ -48,8 +51,14 @@ main = do
     putStrLn "\nop_rel:"
     print expr_op_rel
 
-    putStrLn "\nres:"
-    print expr_res
+    putStrLn "\nres_cond:"
+    print expr_res_cond
+
+    putStrLn "\nres_cicle:"
+    print expr_res_cicle
+
+    putStrLn "\nres_extra:"
+    print expr_res_extra
 
     putStrLn "\npunt:"
     print expr_punt
@@ -67,7 +76,7 @@ main = do
     print expr_com
 
     -- Construimos la lista completa:
-    let tokensPrueba = [("id", expr_id), ("num", expr_num), ("op_arit", expr_op_a), ("asign", expr_asig), ("op_rel", expr_op_rel), ("res", expr_res), ("punt", expr_punt), ("delim", expr_delim), ("bool", expr_bool), ("op_bool", expr_op_bool), ("com", expr_com)]
+    let tokensPrueba = [("id", expr_id), ("num", expr_num), ("op_arit", expr_op_a), ("asign", expr_asig), ("op_rel", expr_op_rel), ("res_cond",expr_res_cond),("res_cicle",expr_res_cicle),("res_extra",expr_res_extra), ("punt", expr_punt), ("delim", expr_delim), ("bool", expr_bool), ("op_bool", expr_op_bool), ("com", expr_com)]
 
     ------------------------------------------
     -- Solo para probar palabras reservadas:
