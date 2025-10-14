@@ -5,7 +5,8 @@ module ReadFile
     handle_contents2,
     handle_contents3,
     handle_contents4,
-    handle_specs
+    handle_specs,
+    remove_comments_test
 )
 where
 
@@ -44,7 +45,7 @@ handle_contents3 (x:xs) c
     | otherwise = handle_contents3  (skip_line xs) c
 
 --------------------------------------------------------------------------------------------------
--- FUnción que dada una cadena, regresa el contenido después del primer salto de línea encontrado
+-- Función que dada una cadena, regresa el contenido después del primer salto de línea encontrado
 --------------------------------------------------------------------------------------------------
 skip_line :: [Char] -> [Char]
 skip_line [] = []
@@ -54,7 +55,7 @@ skip_line (x:xs)
 
 
 ------------------------------------------------------------------------------------------------
--- FUnción que regresa el contendio de una cadena anterior al primer salto de línea encontrado
+-- Función que regresa el contendio de una cadena anterior al primer salto de línea encontrado
 ------------------------------------------------------------------------------------------------
 line_content :: [Char] -> [Char] -> [Char]
 line_content [] p = p
@@ -201,3 +202,43 @@ es_parte_expr :: String -> Bool
 es_parte_expr l =
   let t = trim l
   in not (null t) && not (take 2 t == "--")
+
+
+----------------------------------------------------------------------------
+-- Para comentarios del lenguaje IMP (que pasen por entrada en los tests):
+----------------------------------------------------------------------------
+
+------------------------------------------------------------
+-- Función remove_comments_test
+-- Elimina los comentarios de una cadena fuente,
+-- ignorando tanto comentarios de línea (// ...) y
+-- comentarios de bloque (/* ... */).
+-- Se recorre la cadena carácter por carácter:
+--   * Si se detecta "//", se llama a skipLine
+--   * Si se detecta "/*", se llama a skipBlock
+--   * En cualquier otro caso, se conserva el carácter
+------------------------------------------------------------
+remove_comments_test :: String -> String
+remove_comments_test [] = []
+remove_comments_test ('/':'/':xs) = skip_line2 xs              -- ignoramos hasta el salto de línea
+remove_comments_test ('/':'*':xs) = skip_block xs             -- ignoramos hasta */
+remove_comments_test (x:xs) = x : remove_comments_test xs      -- conservamos todo lo demás
+
+------------------------------------------------------------
+-- Función skip_line2
+-- Ignora todo el comentario de línea
+------------------------------------------------------------
+skip_line2 :: String -> String
+skip_line2 [] = []
+skip_line2 ('\n':xs) = '\n' : remove_comments_test xs
+skip_line2 (_:xs) = skip_line2 xs
+
+------------------------------------------------------------
+-- Función skip_lock
+-- Ignora caracteres mientras no encuentre el patrón "*/" 
+-- que marca el final del comentario de bloque.
+------------------------------------------------------------
+skip_block :: String -> String
+skip_block [] = []  -- si nunca se cierra, ignora hasta el final
+skip_block ('*':'/':xs) = remove_comments_test xs
+skip_block (_:xs) = skip_block xs
