@@ -1,11 +1,13 @@
 module Lexer (lexerM, prefijoMasLargo) where
 
 import MDD
-import Data.Char (isAlpha, isDigit, isSpace)
+import Data.Char (isSpace, isAlpha, isDigit)
 import Data.Maybe (catMaybes)
+import Data.List (maximumBy)
+import Data.Function (on)
 
 --------------------------------------------------------------------
--- Función coincideSim
+-- Función coincideSimb
 -- Compara símbolo de transición con un carácter de entrada.
 -- '#' representa cualquier dígito, 
 -- '@' representa cualquier letra, 
@@ -26,69 +28,45 @@ coincideSimb ts c
 -- * Just (token, lexemaReconocido, restoCadena)
 ----------------------------------------------------------------
 prefijoMasLargo :: MDD -> String -> Maybe (String, String, String)
-prefijoMasLargo mdd input = aux mdd (inicialM mdd) Nothing "" input
+prefijoMasLargo mdd entrada = recorrer (inicialM mdd) Nothing "" entrada
+  where
+    -- recorrer :: estadoActual -> últimoToken -> lexema -> resto -> resultado
+    recorrer :: String -> Maybe (String,String,String) -> String -> String -> Maybe (String,String,String)
+    -- Caso base: no hay entrada ni token previo
+    recorrer _ Nothing "" [] = Nothing
 
+    -- Caso: llegamos al final de la entrada
+    recorrer q ultimoToken lexema []
+      | Just tok <- lookup q (finalesM mdd) = Just (tok, lexema, []) -- estado final: token completo
+      | otherwise = ultimoToken -- no final: devolvemos lo último válido
 
------------------------------------------------------
--- Función auxiliar
--- Realiza la simulación de la MDD carácter por carácter
--- para encontrar el token más largo posible.
---
--- Parámetros:
---   * mdd: máquina discriminadora determinista
---   * q: estado actual
---   * lastTok: último token final reconocido (Maybe)
---   * lexema: lexema en construcción
---   * resto: parte de la cadena que falta analizar
------------------------------------------------------
--- aux :: MDD -> EstadoActual -> ÚltimoToken -> Lexema -> Resto -> Resultado
-aux :: MDD -> String -> Maybe (String,String,String) -> String -> String -> Maybe (String,String,String)
--- Caso base: no hay entrada ni token previo
-aux _ _ Nothing "" [] = Nothing
+    -- Caso general: aún hay caracteres por leer
+    recorrer q ultimoToken lexema resto@(c:cs) =
+      let
+          -- Estados alcanzables desde q con el carácter c
+          siguientes = [qn | (q0, sym, qn) <- transicionesM mdd, q0 == q, coincideSimb sym c]
 
--- Caso: llegamos al final de la entrada
-aux mdd q lastTok lexema [] =
-  case lookup q (finalesM mdd) of
-    Just tok -> Just (tok, lexema, [])   -- estado final: token completo
-    Nothing  -> lastTok                   -- no final: devolvemos lo último válido
+          -- Si el estado actual es final, guardamos el token como posible candidato
+          ultimoToken' = case lookup q (finalesM mdd) of
+                           Just tok -> Just (tok, lexema, resto)
+                           Nothing  -> ultimoToken
+      in
+          case siguientes of
+            [] -> ultimoToken'  -- sin transiciones validas, ent devolver lo último válido
+            _  -> 
+              -- Hay una o más transiciones válidas, probamos cada una
+              let resultados = map (\sig -> recorrer sig ultimoToken' (lexema ++ [c]) cs) siguientes
+              in elegirMasLargo resultados ultimoToken' resto
 
--- Caso general: aún hay caracteres por leer
-aux mdd q lastTok lexema rest@(c:cs) =
-  let 
-    -- Estados alcanzables desde q con el carácter c
-    siguientes = [q2 | (q1, sym, q2) <- transicionesM mdd, q1 == q, coincideSimb sym c]
-
-    -- Si el estado actual es final, guardamos el token como posible candidato
-    lastTok' = case lookup q (finalesM mdd) of
-                  Just tok -> Just (tok, lexema, rest)
-                  Nothing  -> lastTok
-  in case siguientes of
-      [] -> lastTok'  -- sin transición válida, ent regresamos al último token conocido
-      _  ->
-        -- Hay una o más transiciones válidas, probamos cada una
-        let resultados = map (\q2 -> aux mdd q2 lastTok' (lexema ++ [c]) cs) siguientes
-        in elegirMejor resultados lastTok' rest
-
-----------------------------------------------------
--- Función elegirMejor
--- Recibe una lista de resultados posibles y el último token válido
--- Devuelve el token con lexema más largo o, si no hay ninguno,
--- el último token conocido.
------------------------------------------------------
-elegirMejor :: [Maybe (String,String,String)] -> Maybe (String,String,String) -> String -> Maybe (String,String,String)
-elegirMejor resultados ultimoToken _ =
-  case catMaybes resultados of    -- catMaybes: quita los Nothing y extrae los Just -> [ (String,String,String) ]
-    [] -> ultimoToken            -- Si después de filtrar no quedó ninguno, devolvemos el ultimoToken  
-    ys -> Just (mejorPorLongitud ys)
-
---------------------------------------------------------------------------
--- Función auxiliar mejorPorLongitud
--- Selecciona la tupla con el lexema más largo de una lista de candidatos.
--- Cada tupla tiene la forma (token, lexema, restoCadena).
---  Si hay varios con la misma longitud, se queda con el primero encontrado.
----------------------------------------------------------------------------
-mejorPorLongitud :: [(String,String,String)] -> (String,String,String)
-mejorPorLongitud = foldl1 (\a@(_,lexA,_) b@(_,lexB,_) -> if length lexA >= length lexB then a else b)
+------------------------------------------------------------
+-- Función: elegirMasLargo
+-- Elige el token con el lexema más largo entre varios posibles.
+------------------------------------------------------------
+elegirMasLargo :: [Maybe (String,String,String)] -> Maybe (String,String,String) -> String -> Maybe (String,String,String)
+elegirMasLargo resultados tokenAnterior _ =
+  case catMaybes resultados of -- catMaybes: quita los Nothing y extrae los Just -> [ (String,String,String) ]
+    [] -> tokenAnterior -- Si después de filtrar no quedó ninguno, devolvemos el ultimoToken 
+    ys -> Just $ maximumBy (compare `on` (\(_,lexema,_) -> length lexema)) ys
 
 ----------------------------------------------------------------
 --- Función lexerM
