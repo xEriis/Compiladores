@@ -99,19 +99,35 @@ main = do
 
     -- -- 3. Analizamos un programa IMP
     putStrLn "\nAnalizando archivo ./samples/ejemplo1.imp"
-    program <- readFile "./samples/ejemplo1.imp"
+    program1 <- readFile "./samples/ejemplo1.imp"
 
     -- Limpiamos comentarios antes de analizar
-    let programSinComentarios = remove_comments_test program
+    let programSinComentarios1 = remove_comments_test program1
 
     putStrLn "\nCódigo fuente original:"
-    putStrLn program
+    putStrLn program1
     putStrLn "\nCódigo sin comentarios:"
-    putStrLn programSinComentarios
+    putStrLn programSinComentarios1
 
-    let tokensReconocidos = lexerM mdd programSinComentarios
+    let tokensReconocidos1 = lexerM mdd programSinComentarios1
     putStrLn "\nTokens encontrados:"
-    mapM_ print tokensReconocidos
+    mapM_ print tokensReconocidos1
+
+    -- Ejemplo 2
+    putStrLn "\nAnalizando archivo ./samples/ejemplo2.imp"
+    program2 <- readFile "./samples/ejemplo2.imp"
+
+    -- Limpiamos comentarios antes de analizar
+    let programSinComentarios2 = remove_comments_test program2
+
+    putStrLn "\nCódigo fuente original ejemplo 2:"
+    putStrLn program2
+    putStrLn "\nCódigo sin comentarios:"
+    putStrLn programSinComentarios2
+
+    let tokensReconocidos2 = lexerM mdd programSinComentarios2
+    putStrLn "\nTokens encontrados:"
+    mapM_ print tokensReconocidos2
     
 
     hClose fileHandle
