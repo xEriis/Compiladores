@@ -106,8 +106,5 @@ op_bool = Or
                 [Concat [Term o] [Term r]]]
 
 ------------------------------------------------------
--- Comentarios
+-- Comentarios: estos se ignoran en el lenguaje
 ------------------------------------------------------
-com = Concat [Term /] [Term /]
-
--- agregar <= ?
