@@ -9,11 +9,13 @@ where
 import AFN
 import Data.Set (toList, fromList)
 
+------------------------------------------------------------
 -- Abstracción de una transición epsilón,
 -- utilizamos nothing para modelar una transición epsilón.
 -- la tercia representa la función delta, el primero es
 -- el estado donde se lee el cáracter o el epsilon y te lleva
 -- a una lista de estados (no determinista).
+------------------------------------------------------------
 type Trans_eps = (String, Maybe Char, [String])
 
 -- Automáta no determinista con transiciones epsilon, 

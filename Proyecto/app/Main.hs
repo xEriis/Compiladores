@@ -138,7 +138,23 @@ main = do
     let tokensReconocidos3 = lexerM mdd programSinComentarios3
     putStrLn "\nTokens encontrados:"
     mapM_ print tokensReconocidos3
-    
 
+    -- Ejemplo 4
+    putStrLn  "\nAnalizando archivo ./samples/ejemplo4.imp"
+    program4 <- readFile "./samples/ejemplo4.imp"
+
+    -- Limpiamos comentarios antes de analizar
+    let programSinComentarios4 = remove_comments_test program4
+
+    putStrLn "\nCódigo fuente original ejemplo 4:"
+    putStrLn program4
+    putStrLn "\nCódigo sin comentarios:"
+    putStrLn programSinComentarios4
+
+
+    let tokensReconocidos4 = lexerM mdd programSinComentarios4
+    putStrLn "\nTokens encontrados:"
+    mapM_ print tokensReconocidos4
+    
     hClose fileHandle
 

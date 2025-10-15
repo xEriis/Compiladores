@@ -39,8 +39,10 @@ regex_to_AFNe e = aux_regex_to_AFNe e []
 --------------------------------------------------------
 aux_regex_to_AFNe :: Expr -> [String] ->  AFNe
 
+----------------------------------------------------------------------------------------------------------------
 -- Caso para Term:
 -- Construimos el autómata para un símbolo: creamos dos estados q0 -> q1 con la transición con el símbolo 'a'
+----------------------------------------------------------------------------------------------------------------
 aux_regex_to_AFNe (Term a) q = AFNe {estados = q ++ [q0, q1],
                                     alfabeto = [a],
                                     transiciones = [(q0, Just a, [q1])], -- transición etiquetada con el símbolo
@@ -50,9 +52,11 @@ aux_regex_to_AFNe (Term a) q = AFNe {estados = q ++ [q0, q1],
   where q0 = "q" ++ show (length q)
         q1 = "q" ++ show ((length q) + 1)
 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Caso para Or:
 -- Construimos el autómata para la unión: creamos dos nuevos estados, uno inicial q0 y uno final q1. Conectamos con transiciones-ε de q0 a los iniciales de m1 y m2
 -- y los finales de m1, m2 se conectan con transiciones-ε a q1.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 aux_regex_to_AFNe (Or a b) q =  AFNe {estados = (estados m2) ++ [q0, q1],
                                       alfabeto = nub ((alfabeto m1) ++ (alfabeto m2)), -- unimos los alfabetos y utilizamos nub para evitar duplicados en el alfabeto
                                       transiciones = (transiciones m1) ++ (transiciones m2)
@@ -67,9 +71,11 @@ aux_regex_to_AFNe (Or a b) q =  AFNe {estados = (estados m2) ++ [q0, q1],
         q0 = "q" ++ show (length $ estados m2)
         q1 = "q" ++ show ((length $ estados m2) + 1)
 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Caso para Concat:
 -- Construimos el autómata para la concatenación: conectamos con transiciones-ε el estado final (o finales) de m1 con el inicial de m2 y ahora el estado inicial será el inicial de m1 y 
 -- el final será el final de m2.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 aux_regex_to_AFNe (Concat a b) q = AFNe {estados = estados m2,
                                     alfabeto = nub ((alfabeto m1) ++ (alfabeto m2)), -- nub para evitar duplicados en el alfabeto
                                     transiciones = (transiciones m1) ++ (transiciones m2)
@@ -79,10 +85,12 @@ aux_regex_to_AFNe (Concat a b) q = AFNe {estados = estados m2,
   where m1 = aux_regex_to_AFNe a q
         m2 = aux_regex_to_AFNe b (q ++ (estados m1))
   
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Caso para Kleene:
 -- Construimos el autómata para la estrella de kleene: creamos dos nuevos estados, uno inicial q0 y uno final q1, los conectamos con una transición-ε (q0->q1) 
 -- para permitir 0 repeticiones y para más repeticiones usamos transiciones-ε (qf -> qi), además de que conectamos con una transición-ε de q0 al inicial qi
 -- y el final qf se conecta con una transición-ε a q1.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 aux_regex_to_AFNe (Kleene a) q =  AFNe {estados = (estados m1) ++ [q0, q1],
                                     alfabeto = (alfabeto m1),
                                     transiciones = (transiciones m1)
