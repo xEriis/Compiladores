@@ -81,23 +81,17 @@ main = do
 
     -- 2. Construimos la MDD con todos los AFDs
     let mdd = buildMDD afds
-    putStrLn "\nTransiciones desde MDD_0:"
-    mapM_ print [t | t@(q0,_,_) <- transicionesM mdd, q0 == inicialM mdd]
 
-    putStrLn "\n=== Debug de la MDD ==="
-    putStrLn "\nTransiciones:"
-    print (transicionesM mdd)   -- busca ("MDD_START",'i', ...)
-    putStrLn "\nFinales:"
-    print (finalesM mdd)
+    putStrLn "MDD construida correctamente.\n"
 
     putStrLn "\nResumen de la MDD:"
     putStrLn $ "  Estados totales:     " ++ show (length (estadosM mdd))
     putStrLn $ "  Transiciones totales:" ++ show (length (transicionesM mdd))
     putStrLn $ "  Estados finales:     " ++ show (length (finalesM mdd))
-    
-    putStrLn "MDD construida correctamente.\n"
 
-    -- -- 3. Analizamos un programa IMP
+    -- 3. Analizamos programas IMP
+
+    -- Ejemplo 1
     putStrLn "\nAnalizando archivo ./samples/ejemplo1.imp"
     program1 <- readFile "./samples/ejemplo1.imp"
 
@@ -128,6 +122,22 @@ main = do
     let tokensReconocidos2 = lexerM mdd programSinComentarios2
     putStrLn "\nTokens encontrados:"
     mapM_ print tokensReconocidos2
+
+    -- Ejemplo 3
+    putStrLn "\nAnalizando archivo ./samples/ejemplo3.imp"
+    program3 <- readFile "./samples/ejemplo3.imp"
+
+    -- Limpiamos comentarios antes de analizar
+    let programSinComentarios3 = remove_comments_test program3
+
+    putStrLn "\nCódigo fuente original ejemplo 3:"
+    putStrLn program3
+    putStrLn "\nCódigo sin comentarios:"
+    putStrLn programSinComentarios3
+
+    let tokensReconocidos3 = lexerM mdd programSinComentarios3
+    putStrLn "\nTokens encontrados:"
+    mapM_ print tokensReconocidos3
     
 
     hClose fileHandle

@@ -5,4 +5,4 @@ if (false) x:=5 (else) y:=8
 ifa = 1
 thenn = 2
 elsee = 3
-if (ifa == thenn) elsee + 1
+if (ifa = thenn) elsee + 1
