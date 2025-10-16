@@ -346,8 +346,12 @@ checaCasilla q j i m
   | j == i = False         
   | otherwise = (m ! (maxIdx, minIdx) == 1)
   where 
-    Just qi = elemIndex i q 
-    Just qj = elemIndex j q
+    qi = case elemIndex i q of
+      Just qx -> qx
+      Nothing -> -1
+    qj = case elemIndex j q of
+      Just qy -> qy
+      Nothing -> -1
     qin = qi + 1
     qjn = qj + 1
     minIdx = min qin qjn 
