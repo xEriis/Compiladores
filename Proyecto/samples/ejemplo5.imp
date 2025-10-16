@@ -1,0 +1,21 @@
+/* Esto sirve?, se ve que si. */
+estaEsUnaVariableDePrueba123 := 90;
+funciona90 := 80;
+claroFunciona := 1;
+
+trueVar := true;
+
+while (trueVar) {
+    if (funciona90 = estaEsUnaVariableDePrueba123) {
+	trueVar := false;
+    } else {
+	funciona90 := funciona90 + 1
+    }
+    claroFunciona := claroFunciona + 1
+    // termina 
+}
+
+//o quiza no termina
+
+simbolo := if (trueVar) {1} else { if (not trueVar) {2} else {0} } // comentario in line
+

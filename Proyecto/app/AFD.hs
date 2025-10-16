@@ -28,6 +28,8 @@ nubSet = Set.toList . Set.fromList
 sortSet :: Ord a => [a] -> [a]
 sortSet = Set.toAscList . Set.fromList
 
+-- Nuestra definición de las transiciones de un AFD, la nomenclatura es 
+-- (Estado, símbolo, SiguienteEstado)
 type Trans_afd = (String, Char, String)
 
 --La estructura de un Automata Finito Determinista.
@@ -160,8 +162,9 @@ estadosPosibles q (t:ts)
 -- los estados nuevos equivalentes obtenidos de la minimización.
 -- Esta implementación hace uso de los estados equivalentes en su forma de string
 -- es decir, que si tenemos "q0" y "q1" como equivalentes, su representación será
--- "q0q1" de manera que para modificar los estados del automata original, sus transiciones
--- su estado inicial y su estado final hará falta comparar substrings de los estados y poder
+-- "q0,q1" de manera que para modificar los estados del automata original, sus transiciones
+-- su estado inicial y su estado final hará falta comparar si el estado pertenece al nuevo estado,
+-- es decir, comparar si qn está en q0,q1, ..., qn, ..., qi y si ese es el caso entonces
 -- remplazarlos o en su caso eliminarlos, por sus equivalentes ya mezclados o unidos.
 -- Hace uso de varias funciones auxiliares para poder funcionar correctamente.
 -- Recibe un AFD y regresa un AFD.
@@ -220,8 +223,8 @@ minimizaFinales (q:qs) nq
 -- Función auxiliar usada en la minimización del algoritmo. El objetivo es cambiar
 -- los estados de las transiciones por sus equivalentes mezclados obtenidos del algoritmo
 -- de minimización, haciendo uso de comparación de substrings. Es decir, que si por ejemplo
--- se tiene una transición de la forma (q0, a, q1) y "q0q1" resultó ser un nuevo estado
--- entonces dicha transición pasará a ser de la forma (q0q1, a, q0q1).
+-- se tiene una transición de la forma (q0, a, q1) y "q0,q1" resultó ser un nuevo estado
+-- entonces dicha transición pasará a ser de la forma ("q0,q1", a, "q0q1").
 -- Recibe la lista de mapeo de transiciones el automata original y 
 -- otra adicional donde se irán guardando las nuevas transiciones, además recibe la 
 -- lista de estados equivalentes.
@@ -289,13 +292,12 @@ uneListasIntersectadas a (x:xs)
 
 -- El primer paso del algoritmo de minimización provisto por Diego
 -- Checa si alguno de los dos estados correspondientes a una casilla 
--- son iguales o no, si sí se marca con 1, si no se marca con un 0
--- Recibe un AFD una matriz de enteros que representa la tabla
--- Regresa una matriz de enteros modificada por el primer paso
+-- son iguales o no, si sí se marca con 1, si no se deja la marca que estaba
+-- Recibe un AFD una matriz de enteros con valores iniciales igual a 0 que representa la tabla
+-- Regresa una matriz de enteros con valores modificada por el primer paso
 -- Nota: en las matrices de Haskell los indices comienzan en (1,1)
 -- así que para obtener los estados correspondientes en la lista 
--- de estados se usa j-1 e i sin que i se salga del length de la 
--- lista de estados, esto para hacer las modificaciones de manera correcta
+-- de estados se usa j-1 e i-1, esto para hacer las modificaciones de manera correcta
 -- y acorde a la tabla de equivalencias del algoritmo visto en clase
 operaTabla1 :: AFD -> Matrix Int -> Matrix Int
 operaTabla1 (AFD q _ _ _ f) table = mapPos (operacion) table
@@ -353,11 +355,10 @@ checaCasilla q j i m
     maxIdx = max qin qjn
 
 -- Función que obtiene los estados equivalentes que encuentra el algoritmo
--- de minimización visto en clase, funciona obtiendo todos las posiciones
+-- de minimización visto en clase, funciona obteniendo todos las posiciones
 -- de la matriz en una lista de posiciones, luego las filtra asegurandose
 -- que se quede con las que quedaron en 0 y además sea del triangulo
--- izquierdo de la matriz (i.e. j <= i) y que i < length q por como obtenemos
--- los estados apropiados dado el algoritmo, por último solo obtenemos los 
+-- izquierdo de la matriz (i.e. j < i). por último solo obtenemos los 
 -- estados correspondientes dadas las posiciones encontradas.
 estadosEquivalentes :: [String] -> Matrix Int -> [[String]]
 estadosEquivalentes q m =
@@ -367,100 +368,3 @@ estadosEquivalentes q m =
       j < i && (m ! (i, j) == 0)
       ) listaCoordenadas
   in map (\(i, j) -> [q !! (j-1), q !! (i-1)]) equivalentes
-
-a1 :: AFD
-a1 = AFD {
-    estadosD = ["A", "B", "C"],
-    alfabetoD = ['0', '1'],
-    transicionesD = [
-        -- {Current, Input, Next}
-        ("A", '0', "B"), -- {A, 0, B}
-        ("A", '1', "C"), -- {A, 1, C}
-        ("B", '0', "B"), -- {B, 0, B}
-        ("B", '1', "C"), -- {B, 1, C}
-        ("C", '0', "B"), -- {C, 0, B}
-        ("C", '1', "C")  -- {C, 1, C}
-    ],
-    inicialD = "A",
-    finalesD = ["C"]
-}
-
-a2 :: AFD
-a2 = AFD {
-    estadosD = ["q0", "q1", "q2", "q3", "q4", "q5"],
-    alfabetoD = ['a', 'b'],
-    transicionesD = [
-        -- (Current State, Input, Next State)
-        ("q0", 'a', "q1"),
-        ("q0", 'b', "q2"),
-        ("q1", 'a', "q0"),
-        ("q1", 'b', "q3"),
-        ("q2", 'a', "q4"),
-        ("q2", 'b', "q5"),
-        ("q3", 'a', "q4"),
-        ("q3", 'b', "q5"),
-        ("q4", 'a', "q4"),
-        ("q4", 'b', "q5"),
-        ("q5", 'a', "q5"),
-        ("q5", 'b', "q5") 
-    ],
-    inicialD = "q0",
-    finalesD = ["q2", "q3", "q4"]
-}
-
-a3 = AFD {
-    estadosD = ["q0", "qA", "qB", "qAA", "qAB", "qBA", "qBB", "qDEAD"],
-    alfabetoD = ['a', 'b'],
-    transicionesD = [
-        ("q0", 'a', "qA"),
-        ("q0", 'b', "qB"),
-        ("qA", 'a', "qAA"),
-        ("qA", 'b', "qAB"),
-        ("qB", 'a', "qBA"),
-        ("qB", 'b', "qBB"),
-        ("qAA", 'a', "qAA"), -- Stays finished with 'a'
-        ("qAA", 'b', "qAB"), -- Switches to finished with 'b'
-        ("qAB", 'a', "qAA"), -- Switches to finished with 'a'
-        ("qAB", 'b', "qAB"), -- Stays finished with 'b'
-        ("qBB", 'a', "qBA"), -- Stays finished with 'b'
-        ("qBB", 'b', "qBB"), -- Switches to finished with 'a'
-        ("qBA", 'a', "qBA"), -- Switches to finished with 'b'
-        ("qBA", 'b', "qBB"), -- Stays finished with 'a'
-        ("qDEAD", 'a', "qDEAD"),
-        ("qDEAD", 'b', "qDEAD")
-    ],
-    inicialD = "q0",
-    finalesD = ["qAA", "qAB", "qBA", "qBB"]
-}
-
-au :: AFD
-au = AFD {
-    estadosD = ["q0", "q1", "q2", "q3", "qUNR_A", "qUNR_B", "qUNR_C"],
-    alfabetoD = ['a', 'b'],
-    transicionesD = [
-        -- REACHABLE COMPONENT (Language: a...a, |w| >= 3)
-        ("q0", 'a', "q1"),
-        ("q0", 'b', "q3"), -- Trap on 'b' because it must start with 'a'
-
-        ("q1", 'a', "q2"),
-        ("q1", 'b', "q2"),
-
-        ("q2", 'a', "q3"), -- Final condition: Saw final 'a'
-        ("q2", 'b', "q2"), -- Loop until final 'a' is seen
-
-        ("q3", 'a', "q3"), -- Loop: Stays final on 'a'
-        ("q3", 'b', "q2"), -- Switches back to intermediate state on 'b'
-
-        -- UNREACHABLE COMPONENT 1 (Simple Dead State)
-        ("qUNR_A", 'a', "qUNR_A"),
-        ("qUNR_A", 'b', "qUNR_A"),
-
-        -- UNREACHABLE COMPONENT 2 (Two interconnected states)
-        ("qUNR_B", 'a', "qUNR_C"),
-        ("qUNR_B", 'b', "qUNR_B"),
-        ("qUNR_C", 'a', "qUNR_B"),
-        ("qUNR_C", 'b', "qUNR_C")
-    ],
-    inicialD = "q0",
-    finalesD = ["q3", "qUNR_B"]
-}
