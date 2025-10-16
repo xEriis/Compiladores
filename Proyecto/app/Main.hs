@@ -10,6 +10,29 @@ import Lexer
 
 import System.IO
 
+-----------------------------------------------------------
+-- Función Auxiliar que ejecuta la función lexer y los imprime
+-- Recibe la ruta del archivo que contienen las sentencias
+-- Recibe la MDD ya construida
+-----------------------------------------------------------
+example :: [Char] -> MDD -> IO()
+example path mdd = do
+    putStr "\nAnalizando archivo:"
+    print path
+    program1 <- readFile path
+
+    -- Limpiamos comentarios antes de analizar
+    let programSinComentarios1 = remove_comments_test program1
+
+    putStrLn "\nCódigo fuente original:"
+    putStrLn program1
+    putStrLn "\nCódigo sin comentarios:"
+    putStrLn programSinComentarios1
+
+    let tokensReconocidos1 = lexerM mdd programSinComentarios1
+    putStrLn "\nTokens encontrados:"
+    mapM_ print tokensReconocidos1
+
 main :: IO ()
 main = do
     -- 1. Leemos las especificaciones desde IMP.md
@@ -90,88 +113,17 @@ main = do
     putStrLn $ "  Estados finales:     " ++ show (length (finalesM mdd))
 
     -- 3. Analizamos programas IMP
-
-    -- Ejemplo 1
-    putStrLn "\nAnalizando archivo ./samples/ejemplo1.imp"
-    program1 <- readFile "./samples/ejemplo1.imp"
-
-    -- Limpiamos comentarios antes de analizar
-    let programSinComentarios1 = remove_comments_test program1
-
-    putStrLn "\nCódigo fuente original:"
-    putStrLn program1
-    putStrLn "\nCódigo sin comentarios:"
-    putStrLn programSinComentarios1
-
-    let tokensReconocidos1 = lexerM mdd programSinComentarios1
-    putStrLn "\nTokens encontrados:"
-    mapM_ print tokensReconocidos1
-
-    -- Ejemplo 2
-    putStrLn "\nAnalizando archivo ./samples/ejemplo2.imp"
-    program2 <- readFile "./samples/ejemplo2.imp"
-
-    -- Limpiamos comentarios antes de analizar
-    let programSinComentarios2 = remove_comments_test program2
-
-    putStrLn "\nCódigo fuente original ejemplo 2:"
-    putStrLn program2
-    putStrLn "\nCódigo sin comentarios:"
-    putStrLn programSinComentarios2
-
-    let tokensReconocidos2 = lexerM mdd programSinComentarios2
-    putStrLn "\nTokens encontrados:"
-    mapM_ print tokensReconocidos2
-
-    -- Ejemplo 3
-    putStrLn "\nAnalizando archivo ./samples/ejemplo3.imp"
-    program3 <- readFile "./samples/ejemplo3.imp"
-
-    -- Limpiamos comentarios antes de analizar
-    let programSinComentarios3 = remove_comments_test program3
-
-    putStrLn "\nCódigo fuente original ejemplo 3:"
-    putStrLn program3
-    putStrLn "\nCódigo sin comentarios:"
-    putStrLn programSinComentarios3
-
-    let tokensReconocidos3 = lexerM mdd programSinComentarios3
-    putStrLn "\nTokens encontrados:"
-    mapM_ print tokensReconocidos3
-
-    -- Ejemplo 4
-    putStrLn  "\nAnalizando archivo ./samples/ejemplo4.imp"
-    program4 <- readFile "./samples/ejemplo4.imp"
-
-    -- Limpiamos comentarios antes de analizar
-    let programSinComentarios4 = remove_comments_test program4
-
-    putStrLn "\nCódigo fuente original ejemplo 4:"
-    putStrLn program4
-    putStrLn "\nCódigo sin comentarios:"
-    putStrLn programSinComentarios4
-
-
-    let tokensReconocidos4 = lexerM mdd programSinComentarios4
-    putStrLn "\nTokens encontrados:"
-    mapM_ print tokensReconocidos4
-
-    -- Ejemplo 5
-    putStrLn  "\nAnalizando archivo ./samples/ejemplo5.imp"
-    program5 <- readFile "./samples/ejemplo5.imp"
-
-    -- Limpiamos comentarios antes de analizar
-    let programSinComentarios5 = remove_comments_test program5
-
-    putStrLn "\nCódigo fuente original ejemplo 5:"
-    putStrLn program5
-    putStrLn "\nCódigo sin comentarios:"
-    putStrLn programSinComentarios5
-
-
-    let tokensReconocidos5 = lexerM mdd programSinComentarios5
-    putStrLn "\nTokens encontrados:"
-    mapM_ print tokensReconocidos5
+    putStr "\n---- INGRESE EL NÚMERO DEL ARCHIVO DE PRUEBA (1,2,3,4,5)----\n"
+    input <- getLine
+    let num = read input :: Int
+    case num of
+        1 -> example "./samples/ejemplo1.imp" mdd
+        2 -> example "./samples/ejemplo2.imp" mdd
+        3 -> example "./samples/ejemplo3.imp" mdd
+        4 -> example "./samples/ejemplo4.imp" mdd
+        5 -> example "./samples/ejemplo5.imp" mdd
+        _ -> error "No es un número válido"
+    
     
     hClose fileHandle
 
