@@ -10,7 +10,7 @@ module AFD
 
 where
 
-import Data.List (intercalate, elemIndex, nub, intersect, (\\), sort, isInfixOf)
+import Data.List (intercalate, elemIndex, nub, intersect, (\\))
 import Data.List.Split (splitOn)
 -- Se tiene que importar así porque si no, hay un conflicto con el import de 
 -- Data.List ya que tienen funciones llamadas igual
@@ -140,7 +140,7 @@ esSubLista xs ys = all (\x -> elem x ys) xs
 -- Recibe una lista de estados y el mapeo de transiciones
 -- Regresa una lista de estados
 estadosPosiblesLista :: [String] -> [Trans_afd] -> [String]
-estadosPosiblesLista [] d = []
+estadosPosiblesLista [] _ = []
 estadosPosiblesLista (q:qs) d = [q] ++ qp ++ estadosPosiblesLista qs d
   where qp = estadosPosibles q d
 
@@ -150,11 +150,11 @@ estadosPosiblesLista (q:qs) d = [q] ++ qp ++ estadosPosiblesLista qs d
 -- Recibe un estado y el mapeo de transiciones 
 -- Regresa una lista de estados
 estadosPosibles :: String -> [Trans_afd] -> [String]
-estadosPosibles q [] = []
+estadosPosibles _ [] = []
 estadosPosibles q (t:ts) 
   | q0 == q = [qn] ++ (estadosPosibles q ts)
   | otherwise = estadosPosibles q ts
-  where (q0, ms, qn) = t
+  where (q0, _, qn) = t
 
 -- La función principal de minimización.
 -- Primero elimina los estados no alcanzables, luego se le aplica el
@@ -170,10 +170,9 @@ estadosPosibles q (t:ts)
 -- Recibe un AFD y regresa un AFD.
 minimiza :: AFD -> AFD
 minimiza (AFD q a d i f) = (AFD (minimizaEstados nq eqs) na (nub (minimizaTransiciones nd [] eqs)) (minimizaInicial ni eqs) (nub (minimizaFinales nf eqs)))
-  where lq = length q
-        (AFD nq na nd ni nf) = eliminaInalcanzables (AFD q a d i f)
+  where (AFD nq na nd ni nf) = eliminaInalcanzables (AFD q a d i f)
         nlq = length nq
-        eq = estadosEquivalentes nq (minimizaAux (AFD nq na nd ni nf) (matrix nlq nlq $ \(i,j) -> 0))
+        eq = estadosEquivalentes nq (minimizaAux (AFD nq na nd ni nf) (matrix nlq nlq $ \(_,_) -> 0))
         equ = uneEstados eq eq
         eqs = [intercalate "," s | s <- equ]
 
@@ -214,7 +213,7 @@ minimizaEstados (q:qs) nq
 -- Recibe una lista de estados finales y los estados equivalentes
 -- Regresa una lista con los nuevos estados finales.
 minimizaFinales :: [String] -> [String] -> [String]
-minimizaFinales [] nq = []
+minimizaFinales [] _ = []
 minimizaFinales (q:qs) nq 
   | null ns = [q] ++ (minimizaFinales qs nq)
   | otherwise = [ns] ++ minimizaFinales qs nq
@@ -283,7 +282,7 @@ uneEstados (q:qs) eq = nubSet ([nuevoQ] ++ uneEstados qs eq)
 -- Recibe una lista de estados y la lista de los pares de estados equivalentes.
 -- Regresa una lista de estados con los que se es equivalente.
 uneListasIntersectadas :: [String] -> [[String]] -> [String]
-uneListasIntersectadas a [] = []
+uneListasIntersectadas _ [] = []
 uneListasIntersectadas a (x:xs)
   | null i = uneListasIntersectadas a xs
   | otherwise = na ++ nubSet (uneListasIntersectadas na xs)
@@ -328,7 +327,7 @@ operaTabla2 (AFD q a d i f) table newTable
 -- a modificar. 
 -- Regresa una matriz modificada.
 operaTabla2Aux :: [String] -> [Char] -> [Trans_afd] -> Matrix Int -> Matrix Int
-operaTabla2Aux q [] _ m = m
+operaTabla2Aux _ [] _ m = m
 operaTabla2Aux q (c:cs) d m = operaTabla2Aux q cs d (mapPos (operacion) m)
   where
     operacion (i, j) valorActual 
