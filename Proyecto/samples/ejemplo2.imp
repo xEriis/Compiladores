@@ -1,0 +1,8 @@
+/* Este es un comentario de prueba */
+if (false) x:=5 (else) y:=8
+/* Este es otro comentario */ while (false) Z:=(9 + 2)
+
+ifa = 1
+thenn = 2
+elsee = 3
+if (ifa = thenn) elsee + 1

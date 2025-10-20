@@ -1,0 +1,38 @@
+/* Prueba IMP */
+
+x:=10;
+y:=5;
+cond:=true;
+
+// Operación:
+z := x + y * (x / y) - -1; //número -1, pues para hacer la resta debe haber espacio
+
+// If:
+if (x > y and z = 10) {
+    cond := true;
+} else {
+    cond := false;
+}
+
+// Ciclos:
+flag1 := true;
+flag2 := not flag1;
+
+for (i := 0; i < 10; i := i + 1){
+    while (i < 5){
+        skip;
+    }
+    do{
+        i := i + 1;
+    } while (i < 10);
+}
+
+/* Extra*/
+forr := 4;
+doo := 5;
+whilee := 30 001 //se reconocen como 2 números porque los números van sin espacios (30001)
+gh1a // se reconocen como 2 ids porque en clase vimos que en IMP los ids pueden o no terminar en número, pero no hay números en su interior
+
+/* Fin (si no hay cierre también se ignora lo demás)
+contenido ignoradooo
+......................

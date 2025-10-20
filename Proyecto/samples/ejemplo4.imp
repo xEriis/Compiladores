@@ -1,0 +1,32 @@
+/* comment 4* */
+
+/* asignaciones */
+radio:=10;
+pi:=3;
+existe:=true;
+contador:=3;
+
+/* Calcular area circulo */
+// pi * radio * radio
+area:=pi * radio * radio;
+sumatwoar:=2 * (area + radio);
+
+if (radio > 0 and area > 3) {
+    existe := true;
+} else {
+    if (sumatwoar > -1) {
+        existe := false;
+    } else {
+        // Nada/;
+        skip;
+    }
+    contador := 4;
+}
+
+do {
+    radio := radio + 1;
+} while (contador < 5);
+
+condicion1 := (area > 30 and radio < 20);
+condicion2 := (contador = 3 or not existe)
+condicion3 := condicion1 and condicion2

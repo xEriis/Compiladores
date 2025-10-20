@@ -1,0 +1,9 @@
+{}(){}3+1id for ifa if(true){x1:=x2+2}//hola
+/*HOLAAAAAAAAAAAAAAA*/
+
+/*Función Factorial*/
+x = 10;
+res = 1;
+for (i:=2;i<x+1;i:=i+1){
+    res :=res*i;
+}
